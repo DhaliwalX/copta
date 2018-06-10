@@ -1,4 +1,5 @@
 #include "jast/parser-builder.h"
+#include "jast/semantics/type-analysis.h"
 #include "dump-ast.h"
 
 #include <iostream>
@@ -20,8 +21,11 @@ int main()
     std::cout << "Parsed correctly" << std::endl;
 
     printer::DumpAST p(std::cout, 1);
-    ast->Accept(&p);
+    // ast->Accept(&p);
+    TypeAnalysis analysis;
 
+    // ast->Accept(&analysis);
+    // analysis.dump();
     builder.context()->Counters().dump();
     return 0;
 }
