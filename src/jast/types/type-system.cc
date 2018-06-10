@@ -45,7 +45,7 @@ struct FunctionKey {
 
 bool operator==(const FunctionKey &key, const FunctionKey &key1) {
     bool equal = key.return_type == key1.return_type
-                    && key.args_types.size() == key1.args_types.size(); 
+                    && key.args_types.size() == key1.args_types.size();
     if (!equal)
         return false;
 
@@ -116,7 +116,7 @@ Type* TypeSystem::getArrayType(Type *base_type, bool size_known, size_t size) {
     static std::map<Type*, ArrayType> types;
     auto it = types.find(base_type);
     if (it == types.end()) {
-        auto n = types.insert({base_type, ArrayType::get(base_type, size_known, size)});
+        auto n = types.insert({base_type, ArrayType(base_type, size_known, size)});
         return &(n.first->second);
     }
 
@@ -127,7 +127,7 @@ Type* TypeSystem::getPointerType(Type *base_type) {
     static std::map<Type*, PointerType> types;
     auto it = types.find(base_type);
     if (it == types.end()) {
-        auto n = types.insert({ base_type, PointerType::get(base_type) });
+        auto n = types.insert({ base_type, PointerType(base_type) });
         return &(n.first->second);
     }
 

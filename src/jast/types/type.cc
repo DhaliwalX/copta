@@ -1,5 +1,6 @@
 #include "jast/types/type.h"
 #include "jast/types/type-system.h"
+#include "jast/strings.h"
 #include <iostream>
 
 namespace jast {
@@ -52,6 +53,16 @@ void FunctionType::dump() const {
     return_type_->dump();
 }
 
+void UnresolvedType::dump() const {
+    if (IsResolved()) {
+        std::cout << "$Resolved<";
+        placeholder_->dump();
+        std::cout << ">";
+        return;
+    }
+    std::cout << "Unresolved";
+}
+
 // static get methods
 PointerType *PointerType::get(Type *base) {
     return dynamic_cast<PointerType*>(TypeSystem::getPointerType(base));
@@ -64,5 +75,7 @@ ObjectType *ObjectType::get(std::map<std::string, Type*> s) {
 FunctionType *FunctionType::get(Type *return_type, Vector<Type*> args_types) {
     return dynamic_cast<FunctionType*>(TypeSystem::getFunctionType(return_type, args_types));
 }
+
+
 
 }

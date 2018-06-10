@@ -72,29 +72,36 @@ public:
         return type_id_ == that->type_id_;
     }
 
-    bool IsIntegerType() const {
+    virtual bool IsIntegerType() const {
         return type_id_ == TypeID::Integer;
     }
 
-    bool IsStringType() const {
+    virtual bool IsStringType() const {
         return type_id_ == TypeID::String;
     }
-    bool IsArrayType() const {
+    virtual bool IsArrayType() const {
         return type_id_ == TypeID::Array;
     }
 
-    bool IsObjectType() const {
+    virtual bool IsObjectType() const {
         return type_id_ == TypeID::Object;
     }
 
-    bool IsFunctionType() const {
+    virtual bool IsFunctionType() const {
         return type_id_ == TypeID::Function;
     }
 
-    bool IsPointerType() const {
+    virtual bool IsPointerType() const {
         return type_id_ == TypeID::Pointer;
     }
 
+    virtual bool IsUnresolvedType() const {
+        return type_id_ == TypeID::Unresolved;
+    }
+
+    virtual bool IsUndefinedType() const {
+        return type_id_ == TypeID::Undefined;
+    }
     virtual void dump() const = 0;
 
 #define AS_TYPE(T) virtual T##Type* As##T##Type() { return nullptr; }
@@ -178,7 +185,7 @@ protected:
     { }
 
 public:
-    Type *getElementType() {
+    Type *getBaseElementType() {
         return element_type_;
     }
 
@@ -189,8 +196,6 @@ public:
     bool Equals(Type *that) const override {
         return NamedType::Equals(that) && that->AsArrayType()->element_type_->Equals(element_type_);
     }
-
-    static ArrayType *get(Type *element, bool size_known = false, std::size_t size = 0);
 
     void dump() const override;
 protected:
@@ -240,6 +245,14 @@ public:
         return struct_.begin();
     }
 
+    Type *getMember(const std::string &name) {
+        auto it = struct_.find(name);
+        if (it == struct_.end()) {
+            return nullptr;
+        }
+
+        return it->second;
+    }
     iterator end() {
         return struct_.end();
     }
@@ -368,6 +381,10 @@ protected:
 
 public:
     void ResolveTo(Type *t) {
+        if (t->IsUnresolvedType()) {
+            ResolveTo(t->AsUnresolvedType()->ResolvedType());
+            return;
+        }
         resolved_ = true;
         placeholder_ = t;
     }
@@ -380,6 +397,52 @@ public:
         return placeholder_;
     }
 
+#define IS_TYPE(T)\
+    bool Is##T##Type() const override {\
+        if (TypeID::Unresolved == TypeID::T) { \
+            return true;\
+        }\
+        if (IsResolved()) {\
+            return placeholder_->Is##T##Type();\
+        }\
+\
+        return false;\
+    }
+
+TYPE_LIST(IS_TYPE)
+#undef IS_TYPE
+
+#define AS_TYPE(T)\
+    T##Type *As##T##Type() override {\
+        if (TypeID::Unresolved == TypeID::T) {\
+            return dynamic_cast<T##Type*>(this);\
+        }\
+        if (IsResolved()) {\
+            return placeholder_->As##T##Type();\
+        }\
+        return nullptr; \
+    }
+
+TYPE_LIST(AS_TYPE)
+#undef AS_TYPE
+
+    bool Equals(Type *that) const override {
+        if (!IsResolved()) {
+            return false;
+        }
+        if (that->IsUnresolvedType()) {
+            auto *t = dynamic_cast<UnresolvedType*>(that);
+            if (!t->IsResolved()) {
+                return false;
+            }
+
+            return t->ResolvedType() == placeholder_;
+        }
+
+        return that == placeholder_;
+    }
+
+    void dump() const override;
 private:
     Type *placeholder_;
     bool resolved_;
