@@ -23,6 +23,7 @@ if (NOT WIN32)
 endif(NOT WIN32)
 
 include_directories(./include)
+include_directories(./third_party/fmt/include)
 
 set(JAST_SOURCE_FILES "")
 set(JAST_HEADER_FILES "")
@@ -36,21 +37,26 @@ add_subdirectory(./samples)
 add_subdirectory(./tests)
 add_subdirectory(./src/codegen)
 add_subdirectory(./include/codegen)
+add_subdirectory(./include/jast/semantics)
+add_subdirectory(./src/jast/semantics)
 
+add_subdirectory(./third_party/fmt EXCLUDE_FROM_ALL)
 add_library(jast STATIC ${JAST_HEADER_FILES} ${JAST_SOURCE_FILES})
 
-# find LLVMConfig.cmake
-find_package(LLVM REQUIRED CONFIG)
-# find_package(LLVM REQUIRED COMPONENTS core native mcjit)
-message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
-message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
+option (JAST_CODEGEN "Enable Codegen using LLVM" off)
+if (JAST_CODEGEN)
+  # find LLVMConfig.cmake
+  find_package(LLVM REQUIRED CONFIG)
+  # find_package(LLVM REQUIRED COMPONENTS core native mcjit)
+  message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
+  message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
 
-include_directories(${LLVM_INCLUDE_DIRS})
-add_definitions(${LLVM_DEFINITIONS})
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  -D_GNU_SOURCE -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS -DNO_EMIT_FUNCTION")
+  include_directories(${LLVM_INCLUDE_DIRS})
+  add_definitions(${LLVM_DEFINITIONS})
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  -D_GNU_SOURCE -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS -DNO_EMIT_FUNCTION")
 
-llvm_map_components_to_libnames(llvm_libs support core irreader mcjit native)
+  llvm_map_components_to_libnames(llvm_libs support core irreader mcjit native)
 
-add_library(jast_codegen STATIC ${JAST_CODEGEN_FILES})
-target_link_libraries(jast_codegen ${llvm_libs})
-
+  add_library(jast_codegen STATIC ${JAST_CODEGEN_FILES})
+  target_link_libraries(jast_codegen ${llvm_libs})
+endif(JAST_CODEGEN)
