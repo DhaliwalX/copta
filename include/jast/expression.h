@@ -5,6 +5,7 @@
 #include "jast/source-locator.h"
 #include "jast/scope.h"
 #include "jast/handle.h"
+#include "jast/types/type.h"
 
 #include <vector>
 #include <string>
@@ -39,39 +40,26 @@ protected: \
 
 #define AST_NODE_LIST(M)    \
     M(NullLiteral)          \
-    M(UndefinedLiteral)     \
     M(ThisHolder)           \
     M(IntegralLiteral)      \
     M(StringLiteral)        \
-    M(TemplateLiteral)      \
     M(ArrayLiteral)         \
     M(ObjectLiteral)        \
     M(Identifier)           \
     M(BooleanLiteral)       \
-    M(RegExpLiteral)       \
     M(ArgumentList)         \
     M(CallExpression)       \
     M(MemberExpression)     \
-    M(NewExpression)        \
     M(PrefixExpression)     \
     M(PostfixExpression)    \
     M(BinaryExpression)     \
     M(AssignExpression)     \
-    M(TernaryExpression)    \
-    M(CommaExpression)      \
     M(Declaration)          \
     M(DeclarationList)      \
     M(IfStatement)          \
     M(IfElseStatement)      \
     M(ForStatement)         \
     M(WhileStatement)       \
-    M(LabelledStatement)    \
-    M(BreakStatement)       \
-    M(ContinueStatement)    \
-    M(SwitchStatement)      \
-    M(CaseClauseStatement)  \
-    M(TryCatchStatement)    \
-    M(ThrowStatement)       \
     M(DoWhileStatement)     \
     M(BlockStatement)       \
     M(FunctionPrototype)    \
@@ -110,7 +98,7 @@ public:
 
 // helper conversion functions
 #define AS_EXPRESSION_FUNCTION(Type)    \
-    virtual Handle<Type> As##Type() { assert(0 && "Expression is not " #Type); }
+    virtual Handle<Type> As##Type() { assert(0 && "Expression is not " #Type); return nullptr; }
 AST_NODE_LIST(AS_EXPRESSION_FUNCTION)
 #undef AS_EXPRESSION_FUNCTION
 
@@ -170,15 +158,6 @@ public:
     DEFINE_NODE_TYPE(NullLiteral);
 };
 
-class UndefinedLiteral : public Expression {
-public:
-    UndefinedLiteral(Position &loc, Scope *scope)
-        : Expression(loc, scope)
-    { }
-
-    DEFINE_NODE_TYPE(UndefinedLiteral);
-};
-
 class ThisHolder : public Expression {
 public:
     ThisHolder(Position &loc, Scope *scope)
@@ -211,19 +190,6 @@ public:
 
     std::string &string() { return str_; }
     DEFINE_NODE_TYPE(StringLiteral);
-};
-
-class TemplateLiteral : public Expression {
-private:
-    std::string template_string_;
-
-public:
-    TemplateLiteral(Position &loc, Scope *scope, const std::string &template_string)
-        : Expression(loc, scope), template_string_{ template_string }
-    { }
-
-    std::string &template_string() { return template_string_; }
-    DEFINE_NODE_TYPE(TemplateLiteral);
 };
 
 class ArrayLiteral : public Expression {
@@ -277,35 +243,6 @@ public:
 
     bool pred() { return pred_; }
     DEFINE_NODE_TYPE(BooleanLiteral);
-};
-
-enum class RegExpFlags : uint {
-    kGlobal,
-    kUnicode,
-    kIgnoreCase,
-    kMultiline,
-    kSticky
-};
-
-class RegExpLiteral : public Expression {
-public:
-    RegExpLiteral(Position &loc, Scope *scope, const std::string &regex,
-            const std::vector<RegExpFlags> &flags)
-        : Expression(loc, scope), regex_{regex}, flags_{ flags }
-    { }
-
-
-    std::string &regex() {
-        return regex_;
-    }
-
-    std::vector<RegExpFlags> &flags() {
-        return flags_;
-    }
-    DEFINE_NODE_TYPE(RegExpLiteral);
-private:
-    std::string regex_;
-    std::vector<RegExpFlags> flags_;
 };
 
 class ArgumentList : public Expression {
@@ -403,27 +340,13 @@ private:
     Handle<Expression> member_;
 };
 
-class NewExpression : public Expression {
-public:
-    NewExpression(Position &loc, Scope *scope, Handle<Expression> member)
-        : Expression(loc, scope), member_{ member }
-    { }
-
-    Handle<Expression> member() { return member_; }
-    bool ProduceRValue() override { return false; }
-    DEFINE_NODE_TYPE(NewExpression);
-private:
-    Handle<Expression> member_;
-};
-
 enum class PrefixOperation {
     kIncrement,
     kDecrement,
-    kTypeOf,
-    kDelete,
     kBitNot,
     kNot,
-    kVoid
+    kAddr,
+    kDeref,
 };
 
 class PrefixExpression : public Expression {
@@ -518,50 +441,23 @@ private:
     Handle<Expression> rhs_;
 };
 
-class TernaryExpression : public Expression {
-public:
-    TernaryExpression(Position &loc, Scope *scope, Handle<Expression> first,
-                      Handle<Expression> second, Handle<Expression> third)
-    : Expression(loc, scope), first_(first), second_(second),
-        third_(third)
-    { }
-
-    Handle<Expression> first() { return first_; }
-    Handle<Expression> second() { return second_; }
-    Handle<Expression> third() { return third_; }
-    DEFINE_NODE_TYPE(TernaryExpression);
-private:
-    Handle<Expression> first_;
-    Handle<Expression> second_;
-    Handle<Expression> third_;
-};
-
-class CommaExpression : public Expression {
-public:
-    CommaExpression(Position &loc, Scope *scope, Handle<ExpressionList> exprs)
-        : Expression(loc, scope), exprs_{ exprs }
-    { }
-
-    Handle<ExpressionList> exprs() { return exprs_; }
-    DEFINE_NODE_TYPE(CommaExpression);
-private:
-    Handle<ExpressionList> exprs_;
-};
-
 class Declaration : public Expression {
 public:
-    Declaration(Position &loc, Scope *scope, std::string name, Handle<Expression> init)
-        : Expression(loc, scope), name_{ name }, init_{ init }
+    Declaration(Position &loc, Scope *scope, std::string name,
+                        Handle<Expression> init, Type *type)
+        : Expression(loc, scope), name_{ name }, init_{ init }, type_{ type }
     { }
 
 
     std::string &name() { return name_; }
+    Type *type() { return type_; }
 
     Handle<Expression> expr() { return init_; }
     DEFINE_NODE_TYPE(Declaration);
 private:
     std::string name_;
     Handle<Expression> init_;
+    Type *type_;
 };
 
 class DeclarationList : public Expression {

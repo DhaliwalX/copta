@@ -68,14 +68,16 @@ PointerType *PointerType::get(Type *base) {
     return dynamic_cast<PointerType*>(TypeSystem::getPointerType(base));
 }
 
-ObjectType *ObjectType::get(std::map<std::string, Type*> s) {
-    return dynamic_cast<ObjectType*>(TypeSystem::getObjectType(s));
+ObjectType *ObjectType::get(std::map<std::string, Type*> s, const std::string &name) {
+    return dynamic_cast<ObjectType*>(TypeSystem::getObjectType(s, name));
 }
 
 FunctionType *FunctionType::get(Type *return_type, Vector<Type*> args_types) {
     return dynamic_cast<FunctionType*>(TypeSystem::getFunctionType(return_type, args_types));
 }
 
-
-
 }
+
+static jast::RegisterNamedType integerType("int", jast::TypeSystem::getIntegerType());
+static jast::RegisterNamedType stringType("str", jast::TypeSystem::getStringType());
+static jast::RegisterNamedType undefinedType("undef", jast::TypeSystem::getUndefinedType());

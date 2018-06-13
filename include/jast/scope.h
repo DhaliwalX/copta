@@ -4,13 +4,15 @@
 #include <map>
 #include <list>
 
+#include "jast/handle.h"
+
 namespace jast {
 
 class ParserContext;
 class Expression;
 class SymT;
 
-class Scope {
+class Scope : public RefCountObject {
 public:
     using Value = Expression;
 public:

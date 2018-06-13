@@ -1,6 +1,7 @@
 #include "jast/parser.h"
 #include "jast/ast-builder.h"
 #include "jast/token.h"
+#include "jast/types/type-system.h"
 
 #include <sstream>
 
@@ -112,10 +113,10 @@ Handle<Expression> Parser::ParseArrayLiteral()
         exprs.push_back(Handle<Expression>(one));
 
         tok = peek();
-        
+
         if (tok == RBRACK)
             break;
-        EXPECT(COMMA); 
+        EXPECT(COMMA);
     }
 
     return builder()->NewArrayLiteral(exprs);
@@ -123,10 +124,11 @@ Handle<Expression> Parser::ParseArrayLiteral()
 
 Handle<Expression> Parser::ParseObjectMethod(const std::string &name)
 {
-    auto args = ParseParameterList();
-    auto body = ParseBlockStatement();
-    auto proto = builder()->NewFunctionPrototype(name, args);
-    return builder()->NewFunctionStatement(proto->AsFunctionPrototype(), body);
+    // auto args = ParseParameterList();
+    // auto body = ParseBlockStatement();
+    // auto proto = builder()->NewFunctionPrototype(name, args);
+    // return builder()->NewFunctionStatement(proto->AsFunctionPrototype(), body);
+    return nullptr;
 }
 
 Handle<Expression> Parser::ParseObjectLiteral()
@@ -163,7 +165,7 @@ Handle<Expression> Parser::ParseObjectLiteral()
         }
         else if (peek() == LPAREN) {
             prop = ParseObjectMethod(name);
-        } else 
+        } else
         // TODO: create a getter list in the ProxyObject class that will keep track of getters
         // and setters
         if (peek() == IDENTIFIER && (name == "get" || name == "set")) {
@@ -195,27 +197,27 @@ Handle<Expression> Parser::ParsePrimary()
     } else if (tok == NUMBER) {
         result = builder()->NewIntegralLiteral(
                                         ParseNumber(lex()->currentToken()));
-    } else if (tok == TEMPLATE) {
-        result = builder()->NewTemplateLiteral(lex()->currentToken().view());
-    } else if (tok == REGEX) {
-        std::string regex = lex()->currentToken().view();
-        auto pos = regex.rfind("$");
-        auto flags = regex.substr(pos);
-        std::vector<RegExpFlags> fs;
-        for (auto &flag : flags) {
-            if (flag == 'g') {
-                fs.push_back(RegExpFlags::kGlobal);
-            } else if (flag == 'i') {
-                fs.push_back(RegExpFlags::kIgnoreCase);
-            } else if (flag == 'm') {
-                fs.push_back(RegExpFlags::kMultiline);
-            } else if (flag == 'y') {
-                fs.push_back(RegExpFlags::kSticky);
-            } else if (flag == 'u') {
-                fs.push_back(RegExpFlags::kUnicode);
-            }
-        }
-        result = builder()->NewRegExpLiteral(regex.substr(0, pos), fs);
+    // } else if (tok == TEMPLATE) {
+        // result = builder()->NewTemplateLiteral(lex()->currentToken().view());
+    // } else if (tok == REGEX) {
+    //     std::string regex = lex()->currentToken().view();
+    //     auto pos = regex.rfind("$");
+    //     auto flags = regex.substr(pos);
+    //     std::vector<RegExpFlags> fs;
+    //     for (auto &flag : flags) {
+    //         if (flag == 'g') {
+    //             fs.push_back(RegExpFlags::kGlobal);
+    //         } else if (flag == 'i') {
+    //             fs.push_back(RegExpFlags::kIgnoreCase);
+    //         } else if (flag == 'm') {
+    //             fs.push_back(RegExpFlags::kMultiline);
+    //         } else if (flag == 'y') {
+    //             fs.push_back(RegExpFlags::kSticky);
+    //         } else if (flag == 'u') {
+    //             fs.push_back(RegExpFlags::kUnicode);
+    //         }
+    //     }
+    //     result = builder()->NewRegExpLiteral(regex.substr(0, pos), fs);
     } else if (tok == STRING) {
         result = builder()->NewStringLiteral(lex()->currentToken().view());
     } else if (tok == IDENTIFIER) {
@@ -228,7 +230,7 @@ Handle<Expression> Parser::ParsePrimary()
         result = builder()->NewThisHolder();
     } else if (tok == LPAREN) {
         advance();    // eat '('
-        result = ParseCommaExpression();
+        result = ParseBinaryExpression();
         tok = peek();
 
         if (tok != RPAREN)
@@ -297,12 +299,7 @@ Handle<Expression> Parser::ParseIndexExpression()
 Handle<Expression> Parser::ParseMemberExpression()
 {
     Handle<Expression> primary = nullptr;
-    if (peek() == TokenType::NEW) {
-        advance();
-        primary = builder()->NewNewExpression(ParseMemberExpression());
-    } else {
-        primary = ParsePrimary();
-    }
+    primary = ParsePrimary();
 
     // if next token is neither '[' or '.'
     if (peek() != LBRACK && peek() != PERIOD && peek() != LPAREN)
@@ -357,7 +354,7 @@ Handle<ExpressionList> Parser::ParseArgumentList()
     }
 
     advance(true); // eat the last ')'
-    return exprs;    
+    return exprs;
 }
 
 // CallExpression :
@@ -399,26 +396,17 @@ Handle<Expression> Parser::ParseCallExpression()
 // NewExpression :
 //      MemberExpression
 //      new NewExpression
-Handle<Expression> Parser::ParseNewExpression()
-{
-    if (peek() != NEW) {
-        return ParseMemberExpression();
-    }
-    advance(); // eat new
-    auto member = ParseNewExpression();
-    return builder()->NewNewExpression(member);
-}
+// Handle<Expression> Parser::ParseNewExpression()
+// {
+//     return ParseMemberExpression();
+// }
 
 // LeftHandSideExpression :
 //      NewExpression
 //      CallExpression
 Handle<Expression> Parser::ParseLeftHandSideExpression()
 {
-    if (peek() == NEW) {
-        return ParseNewExpression();
-    } else {
-        return ParseCallExpression();
-    }
+    return ParseCallExpression();
 }
 
 PrefixOperation MapTokenWithPrefixOperator(Token &tok)
@@ -426,11 +414,10 @@ PrefixOperation MapTokenWithPrefixOperator(Token &tok)
     switch(tok.type()) {
         case INC:       return PrefixOperation::kIncrement;
         case DEC:       return PrefixOperation::kDecrement;
-        case TYPEOF:    return PrefixOperation::kTypeOf;
-        case DELETE:    return PrefixOperation::kDelete;
+        case BIT_AND:    return PrefixOperation::kAddr;
         case BIT_NOT:   return PrefixOperation::kBitNot;
         case NOT:       return PrefixOperation::kNot;
-        case VOID:      return PrefixOperation::kVoid;
+        case MUL:      return PrefixOperation::kDeref;
         default:    throw SyntaxError(tok, "unrecognised token");
     }
 }
@@ -458,11 +445,10 @@ Handle<Expression> Parser::ParseUnaryExpression()
     } else if (tok == SUB) {
         advance();
 
-        // similarly for `-Expr` to `Expr * -1` 
+        // similarly for `-Expr` to `Expr * -1`
         return builder()->NewBinaryExpression(BinaryOperation::kMultiplication,
             ParseUnaryExpression(), builder()->NewIntegralLiteral(-1.0));
-    } else if (tok == INC || tok == DEC || tok == NOT || tok == BIT_NOT
-        || tok == TYPEOF || tok == DELETE || tok == VOID) {
+    } else if (tok == INC || tok == DEC || tok == NOT || tok == BIT_NOT || tok == MUL || tok == BIT_AND) {
         auto token = lex()->currentToken();
         lex()->advance();
 
@@ -514,7 +500,6 @@ BinaryOperation MapBinaryOperator(Token &tok)
         case BIT_AND:           return BinaryOperation::kBitAnd;
         case BIT_OR:           return BinaryOperation::kBitOr;
         case BIT_XOR:           return BinaryOperation::kBitXor;
-        case INSTANCEOF:           return BinaryOperation::kInstanceOf;
         case IN:            return BinaryOperation::kIn;
         default:       throw SyntaxError(tok,
                                     "unexpected token as binary operator");
@@ -522,7 +507,7 @@ BinaryOperation MapBinaryOperator(Token &tok)
 }
 
 /// reference for this function ::= llvm/examples/Kaleidoscope/chapter3/toy.cpp
-/// if you are unable to understand the function just imagine you are 
+/// if you are unable to understand the function just imagine you are
 /// parsing 2 + 3 * 5 - 6 / 7, (I too used that as a reference)
 Handle<Expression> Parser::ParseBinaryExpressionRhs(int prec, Handle<Expression> lhs)
 {
@@ -560,7 +545,7 @@ Handle<Expression> Parser::ParseBinaryExpression()
 
 Handle<Expression> Parser::ParseAssignExpression()
 {
-    auto lhs = ParseTernaryExpression();
+    auto lhs = ParseBinaryExpression();
     auto tok = peek();
 
     if (!IsAssign(tok))
@@ -573,62 +558,9 @@ Handle<Expression> Parser::ParseAssignExpression()
     return builder()->NewAssignExpression((lhs), (rhs));
 }
 
-Handle<Expression> Parser::ParseTernaryExpression()
-{
-    auto first = ParseBinaryExpression();
-
-    auto tok = peek();
-    if (tok != CONDITIONAL) {
-        return first;
-    }
-
-    // now we're parsing conditional expression
-    // eat '?'
-    advance();
-    auto second = ParseAssignExpression();
-
-    tok = peek();
-    if (tok != COLON) {
-        throw SyntaxError(lex()->currentToken(), "expected a ':'");
-    }
-
-    // eat ':'
-    advance();
-    auto third = ParseAssignExpression();
-
-    return builder()->NewTernaryExpression(first, second, third);
-}
-
-Handle<Expression> Parser::ParseCommaExpression()
-{
-    auto one = ParseAssignExpression();
-    auto tok = lex()->peek();
-
-    // if we have a comma ',', then we definitely have to parse
-    // expr of type (expr, expr*)
-    if (tok != COMMA)
-        return one;
-
-    Handle<ExpressionList> exprs = builder()->NewExpressionList();
-    exprs->Insert(one);
-
-    // loop until we don't find a ','
-    while (true) {
-        advance();
-        one = ParseAssignExpression();
-        exprs->Insert(one);
-
-        tok = peek();
-        if (tok != COMMA)
-            break;
-    }
-
-    return builder()->NewCommaExpression(exprs);
-}
-
 Handle<Expression> Parser::ParseExpression()
 {
-    return ParseCommaExpression();
+    return ParseAssignExpression();
 }
 
 Handle<Expression> Parser::ParseExpressionOptional()
@@ -636,7 +568,7 @@ Handle<Expression> Parser::ParseExpressionOptional()
     auto tok = peek();
 
     if (tok == SEMICOLON) {
-        return builder()->NewUndefinedLiteral();
+        return nullptr;
     } else {
         return ParseExpression();
     }
@@ -660,7 +592,7 @@ Handle<Expression> Parser::ParseIfStatement()
     EXPECT(LPAREN);
 
     // parse the condition of if statement
-    auto condition = ParseCommaExpression();
+    auto condition = ParseBinaryExpression();
     EXPECT(RPAREN);
 
     // parse the body of 'if'
@@ -705,7 +637,7 @@ Handle<Expression> Parser::ParseForStatement()
          *
          *          in
          *         /  \
-         *        /     \ 
+         *        /     \
          * DeclList     expr
          *
          * We need to simplify the ast to simple `a in x` expression
@@ -733,7 +665,7 @@ Handle<Expression> Parser::ParseForStatement()
         condition = builder()->NewBooleanLiteral(true);
     } else {
         // parse 'for (x = 10; >>this<< ...' part
-        condition = ParseCommaExpression();
+        condition = ParseBinaryExpression();
     }
 
     tok = peek();
@@ -744,9 +676,8 @@ Handle<Expression> Parser::ParseForStatement()
     Handle<Expression> update;
     if (peek() != RPAREN) {
         // parse 'for (x = 10; x < 100; >>this<<...' part
-        update = ParseCommaExpression();
+        update = ParseBinaryExpression();
     } else {
-        update = builder()->NewUndefinedLiteral();
     }
 
     tok = peek();
@@ -771,7 +702,7 @@ Handle<Expression> Parser::ParseWhileStatement()
     }
     advance();
 
-    auto condition = ParseCommaExpression();
+    auto condition = ParseBinaryExpression();
     tok = peek();
     if (tok != RPAREN)
         throw SyntaxError(lex()->currentToken(), "expected a ')'");
@@ -798,7 +729,7 @@ Handle<Expression> Parser::ParseDoWhileStatement()
     }
     advance();
 
-    auto condition = ParseCommaExpression();
+    auto condition = ParseBinaryExpression();
     tok = peek();
     if (tok != RPAREN) {
         throw SyntaxError(lex()->currentToken(), "expected a ')'");
@@ -813,7 +744,7 @@ Handle<Expression> Parser::ParseDoWhileStatement()
     return builder()->NewDoWhileStatement(condition, body);
 }
 
-std::vector<std::string> Parser::ParseParameterList()
+std::vector<std::string> Parser::ParseParameterList(std::vector<Type*> *param_types)
 {
     auto tok = peek();
     auto result = std::vector<std::string>();
@@ -832,11 +763,20 @@ std::vector<std::string> Parser::ParseParameterList()
     while (true) {
         tok = peek();
 
-        if (tok != IDENTIFIER) 
+        if (tok != IDENTIFIER)
             throw SyntaxError(lex()->currentToken(), "expected an identifier");
 
         result.push_back(GetIdentifierName());
         advance();
+
+        tok = peek();
+
+        if (tok != COLON) {
+            throw SyntaxError(lex()->currentToken(), "expected a ':'");
+        }
+        advance();
+        Type *arg_type = ParseType();
+        param_types->push_back(arg_type);
 
         tok = peek();
         if (tok == RPAREN)
@@ -854,8 +794,10 @@ std::vector<std::string> Parser::ParseParameterList()
 
 Handle<FunctionPrototype> Parser::ParseFunctionPrototype()
 {
-    // eat 'function'   
+    // eat 'function'
     advance();
+    Type *ret_type = nullptr;
+    std::vector<Type*> arg_types;
     auto tok = peek();
 
     std::string name;
@@ -866,8 +808,17 @@ Handle<FunctionPrototype> Parser::ParseFunctionPrototype()
     }
 
     // parse the argument list
-    auto args = ParseParameterList();
-    return builder()->NewFunctionPrototype(name, args)
+    auto args = ParseParameterList(&arg_types);
+    tok = peek();
+
+    if (tok == COLON) {
+        advance();
+        ret_type = ParseType();
+    } else {
+        ret_type = TypeSystem::getUndefinedType();
+    }
+    Type *t = TypeSystem::getFunctionType(ret_type, arg_types);
+    return builder()->NewFunctionPrototype(name, args, t)
                 ->AsFunctionPrototype();
 }
 
@@ -906,7 +857,7 @@ Handle<Expression> Parser::ParseReturnStatement()
         return builder()->NewReturnStatement(nullptr);
     }
 
-    auto expr = ParseCommaExpression();
+    auto expr = ParseBinaryExpression();
     tok = peek();
 
     if (tok != SEMICOLON)
@@ -925,24 +876,154 @@ Handle<Declaration> Parser::ParseDeclaration()
     advance();
 
     tok = peek();
+
+    Type *type = nullptr;
+    if (tok == COLON) {
+        advance();
+        type = ParseType();
+        tok = peek();
+    } else {
+        type = TypeSystem::getUnresolvedType();
+    }
     if (tok == SEMICOLON || tok == COMMA || (flags_.IsForInLoopParsing() && tok == IN)) {
         return builder()->factory()->NewDeclaration(
-            builder()->locator()->loc(), scope_manager()->current(), name);
+            builder()->locator()->loc(), scope_manager()->current(), name, nullptr, type);
     } else if (tok != ASSIGN) {
         throw SyntaxError(lex()->currentToken(), "expected a '='");
     }
     advance();
     return builder()->factory()->NewDeclaration(
-            builder()->locator()->loc(), scope_manager()->current(), name, ParseAssignExpression());
+            builder()->locator()->loc(), scope_manager()->current(), name, ParseAssignExpression(), type);
 }
 
 Handle<Expression> Parser::ParseVariableOrExpressionOptional() {
     auto tok = peek();
-    if (tok == VAR || tok == LET || tok == CONST) {
+    if (tok == LET || tok == CONST) {
         return ParseVariableStatement();
     }
 
     return ParseExpressionOptional();
+}
+
+Type* Parser::ParseFunctionType() {
+    advance(); // function
+    EXPECT(LPAREN); // (
+    auto tok = peek();
+    auto parameters = std::vector<Type*>();
+    while (tok != RPAREN) {
+        auto type = ParseType();
+        parameters.push_back(type);
+        tok = peek();
+
+        if (tok != COMMA && tok != RPAREN) {
+            throw SyntaxError(lex()->currentToken(), "unexpected token");
+        }
+        if (tok == COMMA) {
+            advance();
+        }
+    }
+
+    advance(); // )
+
+    tok = peek();
+    if (tok != COLON) {
+        return TypeSystem::getFunctionType(TypeSystem::getUndefinedType(), parameters);
+    }
+
+    advance(); // :
+    Type *ret = ParseType();
+    return TypeSystem::getFunctionType(ret, parameters);
+}
+
+Type* Parser::ParseType() {
+    auto tok = peek();
+    if (tok == IDENTIFIER) {
+        auto name = GetIdentifierName();
+        advance();
+        return TypeSystem::getNamedType(name);
+    } else if (tok == LBRACK) {
+        advance();
+        tok = peek();
+        if (tok == RBRACK) {
+            advance();
+            Type *base = ParseType();
+            return TypeSystem::getArrayType(base);
+        } else if (tok == NUMBER) {
+            auto size = ParseNumber(lex()->currentToken());
+            advance();
+            EXPECT(RBRACK);
+            return TypeSystem::getArrayType(ParseType(), true, size_t(size));
+        } else {
+            // need to handle simple compile time constant expressions
+            throw SyntaxError(lex()->currentToken(), "expected a [ or a constant integer");
+        }
+    } else if (tok == MUL) {
+        advance();
+        Type *base = ParseType();
+        return TypeSystem::getPointerType(base);
+    } else if (tok == FUNCTION) {
+        return ParseFunctionType();
+    } else {
+        throw SyntaxError(lex()->currentToken(), "expected a type expression");
+    }
+
+    return nullptr;
+}
+
+Handle<Expression> Parser::ParseTypeDefinition() {
+    advance(); // eat 'type'
+    auto tok = peek();
+    if (tok != IDENTIFIER) {
+        throw SyntaxError(lex()->currentToken(), "expected a name");
+    }
+
+    std::string name = GetIdentifierName();
+    advance();
+    tok = peek();
+    if (tok == IDENTIFIER) {
+        // we are parsing type alias
+        std::string original = GetIdentifierName();
+        advance();
+        TypeSystem::AliasType(name, original);
+        return nullptr;
+    } else if (tok == LBRACE) {
+        // we are parsing struct type
+        advance();
+        std::map<std::string, Type*> types;
+        while (true) {
+            tok = peek();
+            std::string name;
+            Type *type;
+            if (tok == RBRACE) {
+                advance();
+                break;
+            }
+            if (tok == IDENTIFIER) {
+                name = GetIdentifierName();
+                advance();
+            } else {
+                throw SyntaxError(lex()->currentToken(), "expected a name");
+            }
+
+            tok = peek();
+            if (tok != COLON) {
+                throw SyntaxError(lex()->currentToken(), "expected a :");
+            }
+
+            advance();
+            type = ParseType();
+            types[name] = type;
+        }
+
+        TypeSystem::getObjectType(types, name);
+    } else if (tok == FUNCTION) {
+        Type *fun = ParseFunctionType();
+        TypeRegistry::Register(name, fun);
+    } else {
+        throw SyntaxError(lex()->currentToken(), "expected a type expression");
+    }
+
+    return nullptr;
 }
 
 Handle<Expression> Parser::ParseVariableStatement()
@@ -968,153 +1049,153 @@ Handle<Expression> Parser::ParseVariableStatement()
             builder()->locator()->loc(), scope_manager()->current(), decl_list);
 }
 
-Handle<ExpressionList> Parser::ParseCaseBlock()
-{
-    advance();
+// Handle<ExpressionList> Parser::ParseCaseBlock()
+// {
+//     advance();
 
-    // TODO ::= make it more abstract. use ParseExpression
-    Handle<Expression> clause = ParseAssignExpression();
-    EXPECT(COLON);
+//     // TODO ::= make it more abstract. use ParseExpression
+//     Handle<Expression> clause = ParseAssignExpression();
+//     EXPECT(COLON);
 
-    Handle<ExpressionList> cases = builder()->NewExpressionList();
-    Handle<ExpressionList> list = builder()->NewExpressionList();
+//     Handle<ExpressionList> cases = builder()->NewExpressionList();
+//     Handle<ExpressionList> list = builder()->NewExpressionList();
 
-    cases->Insert(clause);
-    do {
-        auto tok = peek();
-        if (tok == CASE) {
-            advance();
-            clause = ParseAssignExpression();
-            cases->Insert(clause);
-            EXPECT(COLON);
-            continue;
-        }
-        Handle<Expression> stmt = ParseStatement();
-        list->Insert(stmt);
-    } while (peek() != CASE && peek() != DEFAULT && peek() != RBRACE);
+//     cases->Insert(clause);
+//     do {
+//         auto tok = peek();
+//         if (tok == CASE) {
+//             advance();
+//             clause = ParseAssignExpression();
+//             cases->Insert(clause);
+//             EXPECT(COLON);
+//             continue;
+//         }
+//         Handle<Expression> stmt = ParseStatement();
+//         list->Insert(stmt);
+//     } while (peek() != CASE && peek() != DEFAULT && peek() != RBRACE);
 
-    Handle<ExpressionList> clauses = builder()->NewExpressionList();
+//     Handle<ExpressionList> clauses = builder()->NewExpressionList();
 
-    auto block = builder()->NewBlockStatement(list);
-    for (auto &c : cases->raw_list()) {
-        clauses->Insert(builder()->NewCaseClauseStatement(c, block));
-    }
-    return clauses;
-}
+//     auto block = builder()->NewBlockStatement(list);
+//     for (auto &c : cases->raw_list()) {
+//         clauses->Insert(builder()->NewCaseClauseStatement(c, block));
+//     }
+//     return clauses;
+// }
 
-Handle<Expression> Parser::ParseDefaultClause()
-{
-    advance();
+// Handle<Expression> Parser::ParseDefaultClause()
+// {
+//     advance();
 
-    EXPECT(COLON);
+//     EXPECT(COLON);
 
-    Handle<ExpressionList> list = builder()->NewExpressionList();
-    do {
-        Handle<Expression> stmt = ParseStatement();
-        list->Insert(stmt);
-    } while (peek() != CASE && peek() != DEFAULT && peek() != RBRACE);
+//     Handle<ExpressionList> list = builder()->NewExpressionList();
+//     do {
+//         Handle<Expression> stmt = ParseStatement();
+//         list->Insert(stmt);
+//     } while (peek() != CASE && peek() != DEFAULT && peek() != RBRACE);
 
-    return builder()->NewBlockStatement(list);
-}
+//     return builder()->NewBlockStatement(list);
+// }
 
-Handle<Expression> Parser::ParseSwitchStatement()
-{
-    advance();
-    EXPECT(LPAREN);
+// Handle<Expression> Parser::ParseSwitchStatement()
+// {
+//     advance();
+//     EXPECT(LPAREN);
 
-    Handle<Expression> expr = ParseAssignExpression();
-    EXPECT(RPAREN);
-    EXPECT(LBRACE);
+//     Handle<Expression> expr = ParseAssignExpression();
+//     EXPECT(RPAREN);
+//     EXPECT(LBRACE);
 
-    bool has_default = false;
-    Handle<ClausesList> list = builder()->NewClausesList();
-    while (true) {
-        Handle<Expression> temp = nullptr;
-        if (peek() == CASE) {
-            auto tempList = ParseCaseBlock();
+//     bool has_default = false;
+//     Handle<ClausesList> list = builder()->NewClausesList();
+//     while (true) {
+//         Handle<Expression> temp = nullptr;
+//         if (peek() == CASE) {
+//             auto tempList = ParseCaseBlock();
 
-            for (auto &t : tempList->raw_list()) {
-                list->PushCase(t->AsCaseClauseStatement());
-            }
-        } else if (peek() == DEFAULT) {
-            if (has_default) {
-                throw SyntaxError(lex()->currentToken(),
-                        "switch statement has already has one default case");
-            }
-            temp = ParseDefaultClause();
-            list->SetDefaultCase(temp);
-            has_default = true;
-        } else if (peek() != RBRACE) {
-            throw SyntaxError(lex()->currentToken(), "expected a '}'");
-        } else {
-            advance();
-            break;
-        }
-    }
+//             for (auto &t : tempList->raw_list()) {
+//                 list->PushCase(t->AsCaseClauseStatement());
+//             }
+//         } else if (peek() == DEFAULT) {
+//             if (has_default) {
+//                 throw SyntaxError(lex()->currentToken(),
+//                         "switch statement has already has one default case");
+//             }
+//             temp = ParseDefaultClause();
+//             list->SetDefaultCase(temp);
+//             has_default = true;
+//         } else if (peek() != RBRACE) {
+//             throw SyntaxError(lex()->currentToken(), "expected a '}'");
+//         } else {
+//             advance();
+//             break;
+//         }
+//     }
 
-    return builder()->NewSwitchStatement(expr, list);
-}
+//     return builder()->NewSwitchStatement(expr, list);
+// }
 
-Handle<Expression> Parser::ParseBreakStatement()
-{
-    advance();
-    Handle<Expression> label = nullptr;
+// Handle<Expression> Parser::ParseBreakStatement()
+// {
+//     advance();
+//     Handle<Expression> label = nullptr;
 
-    if (peek() == IDENTIFIER) {
-        label = builder()->NewIdentifier(GetIdentifierName());
-    }
+//     if (peek() == IDENTIFIER) {
+//         label = builder()->NewIdentifier(GetIdentifierName());
+//     }
 
-    return builder()->NewBreakStatement(label);
-}
+//     return builder()->NewBreakStatement(label);
+// }
 
-Handle<Expression> Parser::ParseContinueStatement()
-{
+// Handle<Expression> Parser::ParseContinueStatement()
+// {
 
-    advance();
-    Handle<Expression> label = nullptr;
+//     advance();
+//     Handle<Expression> label = nullptr;
 
-    if (peek() == IDENTIFIER) {
-        label = builder()->NewIdentifier(GetIdentifierName());
-    }
+//     if (peek() == IDENTIFIER) {
+//         label = builder()->NewIdentifier(GetIdentifierName());
+//     }
 
-    return builder()->NewContinueStatement(label);
-}
+//     return builder()->NewContinueStatement(label);
+// }
 
-Handle<Expression> Parser::ParseTryCatchStatement()
-{
-    Handle<Expression> try_block = nullptr;
-    Handle<Expression> catch_expr = nullptr;
-    Handle<Expression> catch_block = nullptr;
-    Handle<Expression> finally = nullptr;
-    EXPECT(TRY);
+// Handle<Expression> Parser::ParseTryCatchStatement()
+// {
+//     Handle<Expression> try_block = nullptr;
+//     Handle<Expression> catch_expr = nullptr;
+//     Handle<Expression> catch_block = nullptr;
+//     Handle<Expression> finally = nullptr;
+//     EXPECT(TRY);
 
-    try_block = ParseBlockStatement();
-    
-    if (peek() == CATCH) {
-        advance();
-        EXPECT(LPAREN);
-        catch_expr = ParseExpression();
-        EXPECT(RPAREN);
-        catch_block = ParseBlockStatement();
-    }
-    if (peek() == FINALLY) {
-        advance();
-        finally = ParseBlockStatement();
-    }
-    return builder()->NewTryCatchStatement(try_block, catch_expr, catch_block,
-        finally);
-}
+//     try_block = ParseBlockStatement();
 
-// ThrowStatement :
-//      throw [no line terminator] Expression ;
-Handle<Expression> Parser::ParseThrowStatement()
-{
-    EXPECT(THROW);
+//     if (peek() == CATCH) {
+//         advance();
+//         EXPECT(LPAREN);
+//         catch_expr = ParseExpression();
+//         EXPECT(RPAREN);
+//         catch_block = ParseBlockStatement();
+//     }
+//     if (peek() == FINALLY) {
+//         advance();
+//         finally = ParseBlockStatement();
+//     }
+//     return builder()->NewTryCatchStatement(try_block, catch_expr, catch_block,
+//         finally);
+// }
 
-    Handle<Expression> expr = ParseExpression();
+// // ThrowStatement :
+// //      throw [no line terminator] Expression ;
+// Handle<Expression> Parser::ParseThrowStatement()
+// {
+//     EXPECT(THROW);
 
-    return builder()->NewThrowStatement(expr);
-}
+//     Handle<Expression> expr = ParseExpression();
+
+//     return builder()->NewThrowStatement(expr);
+// }
 
 Handle<Expression> Parser::ParseStatement()
 {
@@ -1126,11 +1207,6 @@ Handle<Expression> Parser::ParseStatement()
         auto result = ParseExpressionOptional();
         tok = peek();
 
-        if (tok == COLON && result->IsIdentifier()) {
-            auto label = builder()->NewLabelledStatement(result->AsIdentifier()->GetName(), result);
-            advance();
-            return label; 
-        }
         if (tok != SEMICOLON)
             throw SyntaxError(lex()->currentToken(), "expected a ';'");
         advance();
@@ -1138,7 +1214,7 @@ Handle<Expression> Parser::ParseStatement()
     }
 
     case IF:
-        return ParseIfStatement();  
+        return ParseIfStatement();
     case FOR:
         return ParseForStatement();
     case FUNCTION:
@@ -1151,20 +1227,12 @@ Handle<Expression> Parser::ParseStatement()
         return ParseWhileStatement();
     case DO:
         return ParseDoWhileStatement();
-    case VAR:
     case CONST:
     case LET:
         return ParseVariableStatement();
-    case SWITCH:
-        return ParseSwitchStatement();
-    case BREAK:
-        return ParseBreakStatement();
-    case CONTINUE:
-        return ParseContinueStatement();
-    case TRY:
-        return ParseTryCatchStatement();
-    case THROW:
-        return ParseThrowStatement();
+
+    case TYPE:
+        return ParseTypeDefinition();
     }
 }
 
@@ -1207,7 +1275,9 @@ Handle<Expression> Parser::ParseProgram()
     Handle<ExpressionList> exprs = builder()->NewExpressionList();
     try {
         while (peek() != END_OF_FILE) {
-            exprs->Insert(ParseStatement());
+            auto stmt = ParseStatement();
+            if (stmt)
+                exprs->Insert(stmt);
         }
     } catch (std::exception &e) {
         auto error = dynamic_cast<SyntaxError*>(&e);

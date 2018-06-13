@@ -296,7 +296,7 @@ public:
 
     void dump() const override;
 
-    static ObjectType *get(std::map<std::string, Type*> s);
+    static ObjectType *get(std::map<std::string, Type*> s, const std::string &name);
 private:
     std::map<std::string, Type*> struct_;
 };

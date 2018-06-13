@@ -27,9 +27,6 @@ public:
     // create a new node representing JavaScript 'null'
     Handle<Expression> NewNullLiteral();
 
-    // create a new node representing undefined
-    Handle<Expression> NewUndefinedLiteral();
-
     // create a new node representing JavaScript 'this'
     Handle<Expression> NewThisHolder();
 
@@ -40,9 +37,9 @@ public:
     // create a new node representing JavaScript string
     Handle<Expression> NewStringLiteral(const std::string &str);
 
-    Handle<Expression> NewTemplateLiteral(const std::string &str);
+    // Handle<Expression> NewTemplateLiteral(const std::string &str);
 
-    Handle<Expression> NewRegExpLiteral(const std::string &str, const std::vector<RegExpFlags> &flags);
+    // Handle<Expression> NewRegExpLiteral(const std::string &str, const std::vector<RegExpFlags> &flags);
 
     // create a new node representing JavaScript array
     // after passing `arr` to this function, your arr becomes unusable
@@ -69,7 +66,7 @@ public:
         Handle<Expression> args);
 
     // create a new node representing JavaScript `new` expression
-    Handle<Expression> NewNewExpression(Handle<Expression> expr);
+    // Handle<Expression> NewNewExpression(Handle<Expression> expr);
 
     // create a new node representing JavaScript prefix operation
     Handle<Expression> NewPrefixExpression(PrefixOperation op, Handle<Expression> expr);
@@ -89,10 +86,11 @@ public:
         Handle<Expression> third);
 
     // create a new node representing JavaScript Comma Expression
-    Handle<Expression> NewCommaExpression(Handle<ExpressionList> list);
+    // Handle<Expression> NewCommaExpression(Handle<ExpressionList> list);
 
     // create a new node representing JavaScript block statement
     Handle<Expression> NewBlockStatement(Handle<ExpressionList> stmts);
+
     // create a new node representing JavaScript for loop
     Handle<Expression> NewForStatement(ForKind kind, Handle<Expression> init, Handle<Expression> cond,
         Handle<Expression> update, Handle<Expression> body);
@@ -105,7 +103,7 @@ public:
 
     // create a new node representing JavaScript FunctionPrototype
     Handle<Expression> NewFunctionPrototype(std::string name,
-        std::vector<std::string> args);
+        std::vector<std::string> args, Type *type);
 
     // create a new node representing JavaScript function statement
     // and fuunction expression
@@ -122,29 +120,29 @@ public:
     Handle<Expression> NewReturnStatement(Handle<Expression> ret);
 
     // create a new node representing JavaScript try-catch
-    Handle<Expression> NewTryCatchStatement(Handle<Expression> try_block,
-        Handle<Expression> catch_expr, Handle<Expression> catch_block, Handle<Expression> finally);
+    // Handle<Expression> NewTryCatchStatement(Handle<Expression> try_block,
+        // Handle<Expression> catch_expr, Handle<Expression> catch_block, Handle<Expression> finally);
 
     // create a new node representing JavaScript break statement
-    Handle<Expression> NewBreakStatement(Handle<Expression> label = nullptr);
+    // Handle<Expression> NewBreakStatement(Handle<Expression> label = nullptr);
 
     // create a new node representing JavaScript continue statement
-    Handle<Expression> NewContinueStatement(Handle<Expression> label = nullptr);
+    // Handle<Expression> NewContinueStatement(Handle<Expression> label = nullptr);
 
     // create a new node representing JavaScript label statement
-    Handle<Expression> NewLabelledStatement(std::string label, Handle<Expression> expr);
+    // Handle<Expression> NewLabelledStatement(std::string label, Handle<Expression> expr);
 
     // create a new node representing JavaScript case clause
-    Handle<Expression> NewCaseClauseStatement(Handle<Expression> clause, Handle<Expression> stmt);
+    // Handle<Expression> NewCaseClauseStatement(Handle<Expression> clause, Handle<Expression> stmt);
 
     // create a JavaScript case list
-    Handle<ClausesList> NewClausesList();
+    // Handle<ClausesList> NewClausesList();
 
     // create a new node representing switch statement
-    Handle<Expression> NewSwitchStatement(Handle<Expression> expr, Handle<ClausesList> clauses);
+    // Handle<Expression> NewSwitchStatement(Handle<Expression> expr, Handle<ClausesList> clauses);
 
     // create a new node representing throw statement
-    Handle<Expression> NewThrowStatement(Handle<Expression> expr);
+    // Handle<Expression> NewThrowStatement(Handle<Expression> expr);
     ASTFactory *factory() { return factory_; }
     SourceLocator *locator() { return locator_; }
     ScopeManager *manager() { return manager_; }

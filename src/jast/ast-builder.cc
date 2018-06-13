@@ -19,11 +19,11 @@ Handle<Expression> ASTBuilder::NewNullLiteral()
     return save(factory()->NewNullLiteral(locator()->loc(), manager()->current()));
 }
 
-Handle<Expression> ASTBuilder::NewUndefinedLiteral()
-{
-    COUNT();
-    return save(factory()->NewUndefinedLiteral(locator()->loc(), manager()->current()));
-}
+// Handle<Expression> ASTBuilder::NewUndefinedLiteral()
+// {
+//     COUNT();
+//     return save(factory()->NewUndefinedLiteral(locator()->loc(), manager()->current()));
+// }
 
 Handle<Expression> ASTBuilder::NewThisHolder()
 {
@@ -43,17 +43,17 @@ Handle<Expression> ASTBuilder::NewStringLiteral(const std::string &str)
     return save(factory()->NewStringLiteral(locator()->loc(), manager()->current(), str));
 }
 
-Handle<Expression> ASTBuilder::NewRegExpLiteral(const std::string &str, const std::vector<RegExpFlags> &flags)
-{
-    COUNT();
-    return save(factory()->NewRegExpLiteral(locator()->loc(), manager()->current(), str, flags));
-}
+// Handle<Expression> ASTBuilder::NewRegExpLiteral(const std::string &str, const std::vector<RegExpFlags> &flags)
+// {
+//     COUNT();
+//     return save(factory()->NewRegExpLiteral(locator()->loc(), manager()->current(), str, flags));
+// }
 
-Handle<Expression> ASTBuilder::NewTemplateLiteral(const std::string &str)
-{
-    COUNT();
-    return save(factory()->NewTemplateLiteral(locator()->loc(), manager()->current(), str));
-}
+// Handle<Expression> ASTBuilder::NewTemplateLiteral(const std::string &str)
+// {
+//     COUNT();
+//     return save(factory()->NewTemplateLiteral(locator()->loc(), manager()->current(), str));
+// }
 
 Handle<Expression> ASTBuilder::NewArrayLiteral(ProxyArray arr)
 {
@@ -99,11 +99,11 @@ Handle<Expression> ASTBuilder::NewMemberExpression(MemberAccessKind kind,
     return save(factory()->NewMemberExpression(locator()->loc(), manager()->current(), kind, func, args));
 }
 
-Handle<Expression> ASTBuilder::NewNewExpression(Handle<Expression> expr)
-{
-    COUNT();
-    return save(factory()->NewNewExpression(locator()->loc(), manager()->current(), expr));
-}
+// Handle<Expression> ASTBuilder::NewNewExpression(Handle<Expression> expr)
+// {
+//     COUNT();
+//     return save(factory()->NewNewExpression(locator()->loc(), manager()->current(), expr));
+// }
 
 Handle<Expression> ASTBuilder::NewPrefixExpression(PrefixOperation op,
     Handle<Expression> expr)
@@ -132,18 +132,18 @@ Handle<Expression> ASTBuilder::NewAssignExpression(Handle<Expression> lhs, Handl
     return save(factory()->NewAssignExpression(locator()->loc(), manager()->current(), lhs, rhs));
 }
 
-Handle<Expression> ASTBuilder::NewTernaryExpression(Handle<Expression> first,
-    Handle<Expression> second, Handle<Expression> third)
-{
-    COUNT();
-    return save(factory()->NewTernaryExpression(locator()->loc(), manager()->current(), first, second, third));
-}
+// Handle<Expression> ASTBuilder::NewTernaryExpression(Handle<Expression> first,
+//     Handle<Expression> second, Handle<Expression> third)
+// {
+//     COUNT();
+//     return save(factory()->NewTernaryExpression(locator()->loc(), manager()->current(), first, second, third));
+// }
 
-Handle<Expression> ASTBuilder::NewCommaExpression(Handle<ExpressionList> list)
-{
-    COUNT();
-    return save(factory()->NewCommaExpression(locator()->loc(), manager()->current(), list));
-}
+// Handle<Expression> ASTBuilder::NewCommaExpression(Handle<ExpressionList> list)
+// {
+//     COUNT();
+//     return save(factory()->NewCommaExpression(locator()->loc(), manager()->current(), list));
+// }
 
 Handle<Expression> ASTBuilder::NewBlockStatement(Handle<ExpressionList> stmts)
 {
@@ -173,10 +173,11 @@ Handle<Expression> ASTBuilder::NewDoWhileStatement(Handle<Expression> condition,
 }
 
 Handle<Expression> ASTBuilder::NewFunctionPrototype(std::string name,
-    std::vector<std::string> args)
+    std::vector<std::string> args, Type *type)
 {
     COUNT();
-    return save(factory()->NewFunctionPrototype(locator()->loc(), manager()->current(), name, std::move(args)));
+    return save(factory()->NewFunctionPrototype(locator()->loc(),
+            manager()->current(), name, std::move(args), type));
 }
 
 Handle<Expression> ASTBuilder::NewFunctionStatement(Handle<FunctionPrototype> proto,
@@ -205,56 +206,56 @@ Handle<Expression> ASTBuilder::NewReturnStatement(Handle<Expression> expr)
     return save(factory()->NewReturnStatement(locator()->loc(), manager()->current(), expr));
 }
 
-Handle<Expression> ASTBuilder::NewTryCatchStatement(Handle<Expression> try_block,
-     Handle<Expression> catch_expr, Handle<Expression> catch_block, Handle<Expression> finally)
-{
-    COUNT();
-    return save(factory()->NewTryCatchStatement(locator()->loc(), manager()->current(), try_block, catch_expr, catch_block, finally));
-}
+// Handle<Expression> ASTBuilder::NewTryCatchStatement(Handle<Expression> try_block,
+//      Handle<Expression> catch_expr, Handle<Expression> catch_block, Handle<Expression> finally)
+// {
+//     COUNT();
+//     return save(factory()->NewTryCatchStatement(locator()->loc(), manager()->current(), try_block, catch_expr, catch_block, finally));
+// }
 
-Handle<Expression> ASTBuilder::NewBreakStatement(Handle<Expression> label)
-{
-    COUNT();
-    return save(factory()->NewBreakStatement(locator()->loc(), manager()->current(), label));
-}
+// Handle<Expression> ASTBuilder::NewBreakStatement(Handle<Expression> label)
+// {
+//     COUNT();
+//     return save(factory()->NewBreakStatement(locator()->loc(), manager()->current(), label));
+// }
 
-Handle<Expression> ASTBuilder::NewContinueStatement(Handle<Expression> label)
-{
-    COUNT();
-    return save(factory()->NewContinueStatement(locator()->loc(), manager()->current(), label));
-}
+// Handle<Expression> ASTBuilder::NewContinueStatement(Handle<Expression> label)
+// {
+//     COUNT();
+//     return save(factory()->NewContinueStatement(locator()->loc(), manager()->current(), label));
+// }
 
-Handle<Expression> ASTBuilder::NewLabelledStatement(std::string label, Handle<Expression> expr)
-{
-    COUNT();
-    return save(factory()->NewLabelledStatement(locator()->loc(), manager()->current(), label, expr));
-}
+// Handle<Expression> ASTBuilder::NewLabelledStatement(std::string label, Handle<Expression> expr)
+// {
+//     COUNT();
+//     return save(factory()->NewLabelledStatement(locator()->loc(), manager()->current(), label, expr));
+// }
 
-Handle<Expression> ASTBuilder::NewCaseClauseStatement(Handle<Expression> clause,
-    Handle<Expression> stmt)
-{
-    COUNT();
-    return save(factory()->NewCaseClauseStatement(locator()->loc(), manager()->current(), clause, stmt));
-}
+// Handle<Expression> ASTBuilder::NewCaseClauseStatement(Handle<Expression> clause,
+//     Handle<Expression> stmt)
+// {
+//     COUNT();
+//     return save(factory()->NewCaseClauseStatement(locator()->loc(), manager()->current(), clause, stmt));
+// }
 
-Handle<ClausesList> ASTBuilder::NewClausesList()
-{
-    COUNT();
-    return (factory()->NewClausesList());
-}
+// Handle<ClausesList> ASTBuilder::NewClausesList()
+// {
+//     COUNT();
+//     return (factory()->NewClausesList());
+// }
 
-Handle<Expression> ASTBuilder::NewSwitchStatement(Handle<Expression> expr,
-    Handle<ClausesList> clauses)
-{
-    COUNT();
-    return save(factory()->NewSwitchStatement(locator()->loc(), manager()->current(), expr, clauses));
-}
+// Handle<Expression> ASTBuilder::NewSwitchStatement(Handle<Expression> expr,
+//     Handle<ClausesList> clauses)
+// {
+//     COUNT();
+//     return save(factory()->NewSwitchStatement(locator()->loc(), manager()->current(), expr, clauses));
+// }
 
-Handle<Expression> ASTBuilder::NewThrowStatement(Handle<Expression> expr)
-{
-    COUNT();
-    return save(factory()->NewThrowStatement(locator()->loc(), manager()->current(), expr));
-}
+// Handle<Expression> ASTBuilder::NewThrowStatement(Handle<Expression> expr)
+// {
+//     COUNT();
+//     return save(factory()->NewThrowStatement(locator()->loc(), manager()->current(), expr));
+// }
 
 }
 

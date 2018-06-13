@@ -7,6 +7,7 @@
 #include "jast/token.h"
 #include "jast/handle.h"
 #include "jast/scope.h"
+#include "jast/types/type.h"
 
 #include <vector>
 namespace jast {
@@ -59,7 +60,7 @@ public:
     Handle<Expression> ParseDotExpression();
     Handle<Expression> ParseIndexExpression();
     Handle<Expression> ParseMemberExpression();
-    Handle<Expression> ParseNewExpression();
+    // Handle<Expression> ParseNewExpression();
     Handle<Expression> ParseCallExpression();
     Handle<ExpressionList> ParseArgumentList();
     Handle<Expression> ParseLeftHandSideExpression();
@@ -69,9 +70,9 @@ public:
 
     Handle<Expression> ParseBinaryExpression();
     Handle<Expression> ParseBinaryExpressionRhs(int precedance, Handle<Expression> lhs);
-    Handle<Expression> ParseTernaryExpression();
+    // Handle<Expression> ParseTernaryExpression();
     Handle<Expression> ParseAssignExpression();
-    Handle<Expression> ParseCommaExpression();
+    // Handle<Expression> ParseCommaExpression();
 
     Handle<Expression> ParseStatement();
     Handle<Expression> ParseBlockStatement();
@@ -83,9 +84,9 @@ public:
     Handle<Expression> ParseReturnStatement();
     // Handle<Expression> ParseWithStatement();
     // Handle<Expression> ParseLabelledStatement();
-    Handle<Expression> ParseSwitchStatement();
-    Handle<Expression> ParseThrowStatement();
-    Handle<Expression> ParseTryCatchStatement();
+    // Handle<Expression> ParseSwitchStatement();
+    // Handle<Expression> ParseThrowStatement();
+    // Handle<Expression> ParseTryCatchStatement();
     // Handle<Expression> ParseDebuggerStatement();
 
     Handle<Expression> ParseForStatement();
@@ -93,11 +94,11 @@ public:
     Handle<Expression> ParseDoWhileStatement();
 
     Handle<Expression> ParseFunctionStatement();
-    std::vector<std::string> ParseParameterList();
+    std::vector<std::string> ParseParameterList(std::vector<Type*> *type);
     Handle<FunctionPrototype> ParseFunctionPrototype();
 
-    Handle<ExpressionList> ParseCaseBlock();
-    Handle<Expression> ParseDefaultClause();
+    // Handle<ExpressionList> ParseCaseBlock();
+    // Handle<Expression> ParseDefaultClause();
 
     Handle<Expression> ParseExpression();
     Handle<Expression> ParseExpressionOptional();
@@ -110,6 +111,9 @@ public:
 
     Handle<Expression> ParseVariableOrExpressionOptional();
 
+    Handle<Expression> ParseTypeDefinition();
+    Type *ParseType();
+    Type *ParseFunctionType();
 private:
     String GetStringLiteral();
     String GetIdentifierName();

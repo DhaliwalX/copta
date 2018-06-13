@@ -1,4 +1,6 @@
 #include "dump-ast.h"
+#include "jast/expression.h"
+#include "jast/statement.h"
 
 namespace printer {
 
@@ -9,10 +11,10 @@ void DumpAST::Visit(NullLiteral *literal)
     os() << "NullLiteral (null)\n";
 }
 
-void DumpAST::Visit(UndefinedLiteral *literal)
-{
-    os() << "UndefinedLiteral (undefined)\n";
-}
+// void DumpAST::Visit(UndefinedLiteral *literal)
+// {
+    // os() << "UndefinedLiteral (undefined)\n";
+// }
 
 void DumpAST::Visit(ThisHolder *holder)
 {
@@ -21,18 +23,18 @@ void DumpAST::Visit(ThisHolder *holder)
 
 void DumpAST::Visit(IntegralLiteral *literal)
 {
-    os() << "IntegralLiteral (" << literal->value() << ")\n";
+    os() << "IntegralLiteral = " << literal->value() << "\n";
 }
 
 void DumpAST::Visit(StringLiteral *literal)
 {
-    os() << "StringLiteral ('" << literal->string() << "')\n";
+    os() << "StringLiteral = '" << literal->string() << "'\n";
 }
 
-void DumpAST::Visit(TemplateLiteral *literal)
-{
-    os() << "TemplateLiteral (`" << literal->template_string() << "`)\n";
-}
+// void DumpAST::Visit(TemplateLiteral *literal)
+// {
+    // os() << "TemplateLiteral (`" << literal->template_string() << "`)\n";
+// }
 
 void DumpAST::Visit(ArrayLiteral *literal)
 {
@@ -80,10 +82,10 @@ void DumpAST::Visit(BooleanLiteral *literal)
     os() << "BooleanLiteral (" << std::boolalpha << literal->pred() << ")\n";
 }
 
-void DumpAST::Visit(RegExpLiteral *reg)
-{
-    os() << "RegExpLiteral (" << '/' << reg->regex() << "/)\n";
-}
+// void DumpAST::Visit(RegExpLiteral *reg)
+// {
+    // os() << "RegExpLiteral (" << '/' << reg->regex() << "/)\n";
+// }
 
 void DumpAST::Visit(ArgumentList *args)
 {
@@ -177,15 +179,15 @@ void DumpAST::Visit(MemberExpression *expr)
     os_tabbed() << "}\n";
 }
 
-void DumpAST::Visit(NewExpression *expr)
-{
-    os() << "NewExpression {\n";
-    tab()++;
-    os_tabbed();
-    expr->member()->Accept(this);
-    tab()--;
-    os_tabbed() << "}\n";
-}
+// void DumpAST::Visit(NewExpression *expr)
+// {
+//     os() << "NewExpression {\n";
+//     tab()++;
+//     os_tabbed();
+//     expr->member()->Accept(this);
+//     tab()--;
+//     os_tabbed() << "}\n";
+// }
 
 void DumpAST::Visit(PrefixExpression *expr)
 {
@@ -199,20 +201,17 @@ void DumpAST::Visit(PrefixExpression *expr)
     case PrefixOperation::kDecrement:
         os() << "--";
         break;
-    case PrefixOperation::kTypeOf:
-        os() << "typeof ";
+    case PrefixOperation::kAddr:
+        os() << "&";
         break;
-    case PrefixOperation::kDelete:
-        os() << "delete ";
+    case PrefixOperation::kDeref:
+        os() << "*";
         break;
     case PrefixOperation::kBitNot:
         os() << "~";
         break;
     case PrefixOperation::kNot:
         os() << "!";
-        break;
-    case PrefixOperation::kVoid:
-        os() << "void ";
         break;
     default:
         throw std::runtime_error("invalid prefix operator");
@@ -324,9 +323,6 @@ void DumpAST::Visit(BinaryExpression *expr)
     case BinaryOperation::kBitXor:
         os() << "^";
         break;
-    case BinaryOperation::kInstanceOf:
-        os() << "instanceof";
-        break;
     case BinaryOperation::kIn:
         os() << "in";
         break;
@@ -352,41 +348,51 @@ void DumpAST::Visit(AssignExpression *expr)
     os_tabbed() << "}\n";
 }
 
-void DumpAST::Visit(TernaryExpression *expr)
+// void DumpAST::Visit(TernaryExpression *expr)
+// {
+//     os() << "TernaryExpression {\n";
+//     tab()++;
+//     os_tabbed();
+//     expr->first()->Accept(this);
+//     os_tabbed();
+//     expr->second()->Accept(this);
+//     os_tabbed();
+//     expr->third()->Accept(this);
+//     tab()--;
+//     os_tabbed() << "}\n";
+// }
+
+// void DumpAST::Visit(CommaExpression *expr)
+// {
+//     os() << "CommaExpression {\n";
+//     tab()++;
+//     auto exprs = expr->exprs();
+//     auto b = exprs->begin();
+//     auto e = exprs->end();
+
+//     for (; b != e; ++b) {
+//         os_tabbed();
+//         (*b)->Accept(this);
+//     }
+
+//     tab()--;
+//     os_tabbed() << "}\n";
+// }
+
+void DumpAST::dumpType(Type *t)
 {
-    os() << "TernaryExpression {\n";
-    tab()++;
-    os_tabbed();
-    expr->first()->Accept(this);
-    os_tabbed();
-    expr->second()->Accept(this);
-    os_tabbed();
-    expr->third()->Accept(this);
-    tab()--;
-    os_tabbed() << "}\n";
-}
-
-void DumpAST::Visit(CommaExpression *expr)
-{
-    os() << "CommaExpression {\n";
-    tab()++;
-    auto exprs = expr->exprs();
-    auto b = exprs->begin();
-    auto e = exprs->end();
-
-    for (; b != e; ++b) {
-        os_tabbed();
-        (*b)->Accept(this);
-    }
-
-    tab()--;
-    os_tabbed() << "}\n";
+    os() << "Type = ";
+    t->dump();
+    os() << "\n";
 }
 
 void DumpAST::Visit(Declaration *decl)
 {
     os() << "Declaration (" << decl->name() << ") {\n";
-    
+
+    tab()++; os_tabbed();
+    dumpType(decl->type());
+    tab()--;
     if (decl->expr()) {
         tab()++;
         os_tabbed();
@@ -508,128 +514,128 @@ void DumpAST::Visit(DoWhileStatement *stmt)
     os_tabbed() << "}\n";
 }
 
-void DumpAST::Visit(BreakStatement *stmt)
-{
-    os() << "BreakStatement";
-    if (stmt->label()) {
-        os() << " (label=";
-        stmt->label()->Accept(this);
-        os() << ")";
-    }
-    os() << "\n";
-}
+// void DumpAST::Visit(BreakStatement *stmt)
+// {
+//     os() << "BreakStatement";
+//     if (stmt->label()) {
+//         os() << " (label=";
+//         stmt->label()->Accept(this);
+//         os() << ")";
+//     }
+//     os() << "\n";
+// }
 
-void DumpAST::Visit(ContinueStatement *stmt)
-{
-    os() << "ContinueStatement";
-    if (stmt->label()) {
-        os() << " (label=";
-        stmt->label()->Accept(this);
-        os() << ")";
-    }
-    os() << "\n";
-}
+// void DumpAST::Visit(ContinueStatement *stmt)
+// {
+//     os() << "ContinueStatement";
+//     if (stmt->label()) {
+//         os() << " (label=";
+//         stmt->label()->Accept(this);
+//         os() << ")";
+//     }
+//     os() << "\n";
+// }
 
-void DumpAST::Visit(ThrowStatement *stmt)
-{
-    os() << "ThrowStatement {\n";
-    tab()++;
-    os_tabbed();
-    stmt->expr()->Accept(this);
-    tab()--;
-    os_tabbed() << "}\n";
-}
+// void DumpAST::Visit(ThrowStatement *stmt)
+// {
+//     os() << "ThrowStatement {\n";
+//     tab()++;
+//     os_tabbed();
+//     stmt->expr()->Accept(this);
+//     tab()--;
+//     os_tabbed() << "}\n";
+// }
 
-void DumpAST::Visit(TryCatchStatement *stmt)
-{
-    os() << "TryCatchStatement {\n";
-    tab()++;
-    os_tabbed() << "TryBlock {\n";
-    tab()++;
-    os_tabbed();
-    stmt->try_block()->Accept(this);
-    tab()--;
-    os_tabbed() << "}\n";
-    if (stmt->catch_expr()) {
-        os_tabbed() << "CatchExpression (e=" << stmt->catch_expr()->AsIdentifier()->GetName();
-        os() << ") {\n";
-        tab()++;
-        os_tabbed();
-        stmt->catch_block()->Accept(this);
-        tab()--;
-        os_tabbed() << "}\n";
-    }
+// void DumpAST::Visit(TryCatchStatement *stmt)
+// {
+//     os() << "TryCatchStatement {\n";
+//     tab()++;
+//     os_tabbed() << "TryBlock {\n";
+//     tab()++;
+//     os_tabbed();
+//     stmt->try_block()->Accept(this);
+//     tab()--;
+//     os_tabbed() << "}\n";
+//     if (stmt->catch_expr()) {
+//         os_tabbed() << "CatchExpression (e=" << stmt->catch_expr()->AsIdentifier()->GetName();
+//         os() << ") {\n";
+//         tab()++;
+//         os_tabbed();
+//         stmt->catch_block()->Accept(this);
+//         tab()--;
+//         os_tabbed() << "}\n";
+//     }
 
-    if (stmt->finally()) {
-        os_tabbed() << "FinallyExpression {\n";
-        tab()++;
-        os_tabbed();
-        stmt->finally()->Accept(this);
-        tab()--;
-        os_tabbed() << "}\n";
-    }
-    tab()--;
-    os_tabbed() << "}\n";
-}
+//     if (stmt->finally()) {
+//         os_tabbed() << "FinallyExpression {\n";
+//         tab()++;
+//         os_tabbed();
+//         stmt->finally()->Accept(this);
+//         tab()--;
+//         os_tabbed() << "}\n";
+//     }
+//     tab()--;
+//     os_tabbed() << "}\n";
+// }
 
-void DumpAST::Visit(LabelledStatement *stmt)
-{
-    os() << "LabelledStatement (label=" << stmt->label() << ")\n";
-}
+// void DumpAST::Visit(LabelledStatement *stmt)
+// {
+//     os() << "LabelledStatement (label=" << stmt->label() << ")\n";
+// }
 
-void DumpAST::Visit(CaseClauseStatement *stmt)
-{
-    os() << "CaseClauseStatement {\n";
-    tab()++;
-    os_tabbed() << "CaseClause {\n";
-    tab()++;
-    os_tabbed();
-    stmt->clause()->Accept(this);
-    tab()--;
-    os_tabbed() << "}\n";
-    os_tabbed() << "Statement {\n";
-    tab()++;
-    os_tabbed();
-    stmt->stmt()->Accept(this);
-    tab()--;
-    os_tabbed() << "}\n";
-    tab()--;
-    os_tabbed() << "}\n";
-}
+// void DumpAST::Visit(CaseClauseStatement *stmt)
+// {
+//     os() << "CaseClauseStatement {\n";
+//     tab()++;
+//     os_tabbed() << "CaseClause {\n";
+//     tab()++;
+//     os_tabbed();
+//     stmt->clause()->Accept(this);
+//     tab()--;
+//     os_tabbed() << "}\n";
+//     os_tabbed() << "Statement {\n";
+//     tab()++;
+//     os_tabbed();
+//     stmt->stmt()->Accept(this);
+//     tab()--;
+//     os_tabbed() << "}\n";
+//     tab()--;
+//     os_tabbed() << "}\n";
+// }
 
-void DumpAST::Visit(SwitchStatement *stmt)
-{
-    os() << "SwitchStatement {\n";
+// void DumpAST::Visit(SwitchStatement *stmt)
+// {
+//     os() << "SwitchStatement {\n";
 
-    tab()++;
-    os_tabbed() << "SwitchExpression {\n";
-    tab()++;
-    stmt->expr()->Accept(this);
-    tab()--;
-    os_tabbed() << "}\n";
+//     tab()++;
+//     os_tabbed() << "SwitchExpression {\n";
+//     tab()++;
+//     stmt->expr()->Accept(this);
+//     tab()--;
+//     os_tabbed() << "}\n";
 
-    os_tabbed() << "SwitchBlock {\n";
-    tab()++;
-    auto list = stmt->clauses();
+//     os_tabbed() << "SwitchBlock {\n";
+//     tab()++;
+//     auto list = stmt->clauses();
 
-    for (auto &clause : *list) {
-        os_tabbed();
-        clause->Accept(this);
-    }
+//     for (auto &clause : *list) {
+//         os_tabbed();
+//         clause->Accept(this);
+//     }
 
-    if (stmt->default_clause()) {
-        os_tabbed() << "DefaultClause {\n";
-        tab()++;
-        os_tabbed();
-        stmt->default_clause()->Accept(this);
-        tab()--;
-        os_tabbed() << "}\n";
-    }
-    tab()--;
-    os_tabbed() << "}\n";
-    tab()--;
-    os_tabbed() << "}\n";
-}
+//     if (stmt->default_clause()) {
+//         os_tabbed() << "DefaultClause {\n";
+//         tab()++;
+//         os_tabbed();
+//         stmt->default_clause()->Accept(this);
+//         tab()--;
+//         os_tabbed() << "}\n";
+//     }
+//     tab()--;
+//     os_tabbed() << "}\n";
+//     tab()--;
+//     os_tabbed() << "}\n";
+// }
 
 void DumpAST::Visit(FunctionPrototype *proto)
 {
@@ -648,6 +654,8 @@ void DumpAST::Visit(FunctionPrototype *proto)
         os() << out;
     }
     os() << ")\n";
+    os_tabbed();
+    dumpType(proto->GetType());
     tab()--;
     os_tabbed() << "}\n";
 }

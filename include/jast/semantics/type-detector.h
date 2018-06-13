@@ -3,6 +3,7 @@
 
 #include "jast/types/type.h"
 #include "jast/expression.h"
+#include "jast/statement.h"
 #include "jast/semantics/error.h"
 
 namespace jast {

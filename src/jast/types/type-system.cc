@@ -1,11 +1,49 @@
 #include "jast/types/type-system.h"
 #include "jast/types/type.h"
 
-#include <unordered_map>
+#include "jast/strings.h"
+#include "jast/common.h"
+
 #include <map>
 #include <list>
+#include <assert.h>
 
 using namespace jast;
+
+namespace jast {
+std::unordered_map<std::string, Type*> TypeRegistry::named_types_;
+}
+
+void TypeRegistry::Register(const std::string &name, Type *type) {
+    auto it = named_types_.find(name);
+    if (it == named_types_.end()) {
+        named_types_.insert(std::make_pair(name, type));
+        return;
+    }
+
+    Type *already = it->second;
+    if (already->IsUnresolvedType()) {
+        if (already->AsUnresolvedType()->IsResolved()) {
+            throw TypeError(Strings::Format("{} has been already resolved", name));
+        }
+        already->AsUnresolvedType()->ResolveTo(type);
+    } else {
+        throw TypeError(Strings::Format("{} has been already declared", name));
+    }
+}
+
+Type* TypeRegistry::GetNamedType(const std::string &name) {
+    auto it = named_types_.find(name);
+    if (it == named_types_.end()) {
+        return nullptr;
+    }
+
+    return it->second;
+}
+
+RegisterNamedType::RegisterNamedType(const std::string &name, Type *type) {
+    TypeRegistry::Register(name, type);
+}
 
 inline void hash_combine(std::size_t& seed) { }
 
@@ -100,45 +138,92 @@ namespace std {
 
 namespace jast {
 
-Type* TypeSystem::getIntegerType() {
+Type* TypeSystem::getIntegerType(const std::string &name) {
+    if (name.length() > 0) {
+        auto t = TypeRegistry::GetNamedType(name);
+        if (t == nullptr) {
+            TypeRegistry::Register(name, getIntegerType());
+        }
+    }
+
     return IntegerType::get();
 }
 
-Type* TypeSystem::getStringType() {
-    return StringType::get();
-}
+Type* TypeSystem::getStringType(const std::string &name) {
+    if (name.length() > 0) {
+        auto t = TypeRegistry::GetNamedType(name);
+        if (t == nullptr) {
+            TypeRegistry::Register(name, getIntegerType());
+        }
+    }
+
+    return StringType::get();}
 
 Type* TypeSystem::getUndefinedType() {
     return UndefinedType::get();
 }
 
-Type* TypeSystem::getArrayType(Type *base_type, bool size_known, size_t size) {
+Type* TypeSystem::getArrayType(Type *base_type, bool size_known, size_t size,
+        const std::string &name) {
     static std::map<Type*, ArrayType> types;
     auto it = types.find(base_type);
+    Type *ret = nullptr;
     if (it == types.end()) {
         auto n = types.insert({base_type, ArrayType(base_type, size_known, size)});
-        return &(n.first->second);
+        ret = &(n.first->second);
+    } else {
+        ret = &(it->second);
     }
 
-    return &(it->second);
+    if (name.length() > 0) {
+        auto t = TypeRegistry::GetNamedType(name);
+        if (t == nullptr) {
+            t = ret;
+            TypeRegistry::Register(name, t);
+        }
+        assert(t == ret && "Types are not same");
+    }
+    return ret;
 }
 
-Type* TypeSystem::getPointerType(Type *base_type) {
+Type* TypeSystem::getPointerType(Type *base_type, const std::string &name) {
     static std::map<Type*, PointerType> types;
     auto it = types.find(base_type);
+    Type *ret = nullptr;
     if (it == types.end()) {
-        auto n = types.insert({ base_type, PointerType(base_type) });
-        return &(n.first->second);
+        auto n = types.insert({base_type, PointerType(base_type)});
+        ret = &(n.first->second);
+    } else {
+        ret = &(it->second);
     }
 
-    return &it->second;
+    if (name.length() > 0) {
+        auto t = TypeRegistry::GetNamedType(name);
+        if (t == nullptr) {
+            t = ret;
+            TypeRegistry::Register(name, t);
+        }
+        assert(t == ret && "Types are not same");
+    }
+    return ret;
 }
 
-Type* TypeSystem::getObjectType(const std::map<std::string, Type*> &map) {
-    static std::unordered_map<std::map<std::string, Type*>, ObjectType> types;
+class ObjectTypeManager {
+public:
+    static std::unordered_map<std::map<std::string, Type*>, ObjectType> types_;
+};
+
+std::unordered_map<std::map<std::string, Type*>, ObjectType> ObjectTypeManager::types_;
+
+Type* TypeSystem::getObjectType(const std::map<std::string, Type*> &map,
+        const std::string &name) {
+    std::unordered_map<std::map<std::string, Type*>, ObjectType> &types = ObjectTypeManager::types_;
     auto it = types.find(map);
     if (it == types.end()) {
         auto n = types.insert(std::make_pair(map, ObjectType(map)));
+        if (name.length() > 0) {
+            TypeRegistry::Register(name, &n.first->second);
+        }
         return &(n.first->second);
     }
 
@@ -151,19 +236,47 @@ Type* TypeSystem::getUnresolvedType() {
     return &types.back();
 }
 
-Type* TypeSystem::getFunctionType(Type *return_type, const std::vector<Type*> &args_types) {
+Type* TypeSystem::getFunctionType(Type *return_type, const std::vector<Type*> &args_types,
+    const std::string &name) {
     static std::unordered_map<FunctionKey, FunctionType> types;
 
     FunctionKey key;
     key.return_type = return_type;
     key.args_types = args_types;
+    Type *ret = nullptr;
     auto it = types.find(key);
     if (it == types.end()) {
         auto n = types.insert(std::make_pair(key, FunctionType(return_type, args_types)));
-        return &(n.first->second);
+        ret = &(n.first->second);
+    } else {
+        ret = &(it->second);
     }
 
-    return &it->second;
+    if (name.length() > 0) {
+        auto t = TypeRegistry::GetNamedType(name);
+        if (t == nullptr) {
+            t = ret;
+            TypeRegistry::Register(name, t);
+        }
+        assert(t == ret && "Types are not same");
+    }
+    return ret;
+}
+
+Type* TypeSystem::getNamedType(const std::string &name) {
+    auto t = TypeRegistry::GetNamedType(name);
+    if (t == nullptr) {
+        // save the named type as unresolved type
+        t = getUnresolvedType();
+        TypeRegistry::Register(name, t);
+    }
+
+    return t;
+}
+
+void TypeSystem::AliasType(const std::string &name, const std::string &originalTypeName) {
+    Type *t = getNamedType(originalTypeName);
+    TypeRegistry::Register(name, t);
 }
 
 }

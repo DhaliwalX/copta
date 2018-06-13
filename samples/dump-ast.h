@@ -4,7 +4,11 @@
 #include "jast/astvisitor.h"
 #include <iostream>
 
+namespace jast {
+class Type;
+}
 namespace printer {
+
 
 class DumpAST : public jast::ASTVisitor {
 public:
@@ -17,6 +21,8 @@ protected:
     int &tab() { return tab_; }
     bool tabs_or_spaces() { return tab_or_spaces_; }
     std::ostream &os_tabbed() { return os_ << std::string(tab(), ' '); }
+
+    void dumpType(jast::Type *type);
 
 public:
 #define DECLARE_VISITOR_METHOD(type) void Visit(jast::type *) override;

@@ -65,12 +65,6 @@ bool MatchBooleanLiteral(Handle<BooleanLiteral> a, Handle<BooleanLiteral> b)
     return a->pred() == b->pred();
 }
 
-bool MatchRegExpLiteral(Handle<RegExpLiteral> a, Handle<RegExpLiteral> b)
-{
-    // TODO;
-    return false;
-}
-
 bool MatchArgumentList(Handle<ArgumentList> a, Handle<ArgumentList> b)
 {
     return MatchExpressionList(a->args(), b->args());
@@ -86,11 +80,6 @@ bool MatchMemberExpression(Handle<MemberExpression> a, Handle<MemberExpression> 
 {
     return FastASTMatcher::match(a->member(), b->member())
         && FastASTMatcher::match(a->expr(), b->expr());
-}
-
-bool MatchNewExpression(Handle<NewExpression> a, Handle<NewExpression> b)
-{
-    return FastASTMatcher::match(a->member(), b->member());
 }
 
 bool MatchPrefixExpression(Handle<PrefixExpression> a, Handle<PrefixExpression> b)
@@ -116,18 +105,6 @@ bool MatchAssignExpression(Handle<AssignExpression> a, Handle<AssignExpression> 
 {
     return FastASTMatcher::match(a->lhs(), b->lhs())
         && FastASTMatcher::match(a->rhs(), b->rhs());
-}
-
-bool MatchTernaryExpression(Handle<TernaryExpression> a, Handle<TernaryExpression> b)
-{
-    return FastASTMatcher::match(a->first(), b->first())
-        && FastASTMatcher::match(a->second(), b->second())
-        && FastASTMatcher::match(a->third(), b->third());
-}
-
-bool MatchCommaExpression(Handle<CommaExpression> a, Handle<CommaExpression> b)
-{
-    return MatchExpressionList(a->exprs(), b->exprs());
 }
 
 bool MatchDeclaration(Handle<Declaration> a, Handle<Declaration> b)
@@ -174,64 +151,6 @@ bool MatchDoWhileStatement(Handle<DoWhileStatement> a, Handle<DoWhileStatement> 
         && FastASTMatcher::match(a->body(), b->body());
 }
 
-bool MatchBreakStatement(Handle<BreakStatement> a, Handle<BreakStatement> b)
-{
-    return FastASTMatcher::match(a->label(), b->label());
-}
-
-bool MatchContinueStatement(Handle<ContinueStatement> a, Handle<ContinueStatement> b)
-{
-    return FastASTMatcher::match(a->label(), b->label());
-}
-
-bool MatchThrowStatement(Handle<ThrowStatement> a, Handle<ThrowStatement> b)
-{
-    return FastASTMatcher::match(a->expr(), b->expr());
-}
-
-bool MatchTryStatement(Handle<TryCatchStatement> a, Handle<TryCatchStatement> b)
-{
-    return FastASTMatcher::match(a->try_block(), b->try_block())
-        && FastASTMatcher::match(a->catch_expr(), b->catch_expr())
-        && FastASTMatcher::match(a->catch_block(), b->catch_block())
-        && FastASTMatcher::match(a->finally(), b->finally());
-}
-
-bool MatchLabelledStatement(Handle<LabelledStatement> a, Handle<LabelledStatement> b)
-{
-    return a->label() == b->label() && FastASTMatcher::match(a->expr(),
-        b->expr());
-}
-
-bool MatchCaseClauseStatement(Handle<CaseClauseStatement> a, Handle<CaseClauseStatement> b)
-{
-    return FastASTMatcher::match(a->clause(), b->clause())
-        && FastASTMatcher::match(a->stmt(), b->stmt());
-}
-
-bool MatchClausesList(Handle<ClausesList> a, Handle<ClausesList> b)
-{
-    if (!a->HasDefaultCase() || !b->HasDefaultCase()
-        || a->Size() != b->Size())
-        return false;
-
-    for (decltype(a->Size()) i = 0; i < a->Size(); i++) {
-        if (!MatchCaseClauseStatement(*(a->begin() + i), *(b->begin() + i)))
-            return false;
-    }
-
-    if (FastASTMatcher::match(a->def(), b->def()))
-        return false;
-
-    return true;
-}
-
-bool MatchSwitchStatement(Handle<SwitchStatement> a, Handle<SwitchStatement> b)
-{
-    return FastASTMatcher::match(a->expr(), b->expr())
-        && MatchClausesList(a->clauses(), b->clauses());
-}
-
 bool MatchFunctionPrototype(Handle<FunctionPrototype> a, Handle<FunctionPrototype> b)
 {
     return a->GetName() == b->GetName()
@@ -272,7 +191,6 @@ bool FastASTMatcher::match(Handle<Expression> a, Handle<Expression> b)
         return false;
     switch (a->type()) {
     case ASTNodeType::kNullLiteral:
-    case ASTNodeType::kUndefinedLiteral:
     case ASTNodeType::kThisHolder:
         return true;
 
@@ -290,8 +208,6 @@ bool FastASTMatcher::match(Handle<Expression> a, Handle<Expression> b)
       return MatchIdentifier(a->AsIdentifier(), b->AsIdentifier());
     case ASTNodeType::kBooleanLiteral:
       return MatchBooleanLiteral(a->AsBooleanLiteral(), b->AsBooleanLiteral());
-    case ASTNodeType::kRegExpLiteral:
-      return MatchRegExpLiteral(a->AsRegExpLiteral(), b->AsRegExpLiteral());
     case ASTNodeType::kArgumentList:
       return MatchArgumentList(a->AsArgumentList(), b->AsArgumentList());
     case ASTNodeType::kCallExpression:
@@ -299,8 +215,6 @@ bool FastASTMatcher::match(Handle<Expression> a, Handle<Expression> b)
     case ASTNodeType::kMemberExpression:
       return MatchMemberExpression(a->AsMemberExpression(),
                                    b->AsMemberExpression());
-    case ASTNodeType::kNewExpression:
-      return MatchNewExpression(a->AsNewExpression(), b->AsNewExpression());
     case ASTNodeType::kPrefixExpression:
       return MatchPrefixExpression(a->AsPrefixExpression(),
                                    b->AsPrefixExpression());
@@ -313,12 +227,6 @@ bool FastASTMatcher::match(Handle<Expression> a, Handle<Expression> b)
     case ASTNodeType::kAssignExpression:
       return MatchAssignExpression(a->AsAssignExpression(),
                                    b->AsAssignExpression());
-    case ASTNodeType::kTernaryExpression:
-      return MatchTernaryExpression(a->AsTernaryExpression(),
-                                    b->AsTernaryExpression());
-    case ASTNodeType::kCommaExpression:
-      return MatchCommaExpression(a->AsCommaExpression(),
-                                  b->AsCommaExpression());
     case ASTNodeType::kDeclaration:
       return MatchDeclaration(a->AsDeclaration(), b->AsDeclaration());
     case ASTNodeType::kDeclarationList:
@@ -336,25 +244,6 @@ bool FastASTMatcher::match(Handle<Expression> a, Handle<Expression> b)
     case ASTNodeType::kDoWhileStatement:
       return MatchDoWhileStatement(a->AsDoWhileStatement(),
                                    b->AsDoWhileStatement());
-    case ASTNodeType::kLabelledStatement:
-      return MatchLabelledStatement(a->AsLabelledStatement(),
-                                    b->AsLabelledStatement());
-    case ASTNodeType::kBreakStatement:
-      return MatchBreakStatement(a->AsBreakStatement(), b->AsBreakStatement());
-    case ASTNodeType::kContinueStatement:
-      return MatchContinueStatement(a->AsContinueStatement(),
-                                    b->AsContinueStatement());
-    case ASTNodeType::kSwitchStatement:
-      return MatchSwitchStatement(a->AsSwitchStatement(),
-                                  b->AsSwitchStatement());
-    case ASTNodeType::kCaseClauseStatement:
-      return MatchCaseClauseStatement(a->AsCaseClauseStatement(),
-                                      b->AsCaseClauseStatement());
-    case ASTNodeType::kTryCatchStatement:
-      return MatchTryStatement(a->AsTryCatchStatement(),
-                               b->AsTryCatchStatement());
-    case ASTNodeType::kThrowStatement:
-      return MatchThrowStatement(a->AsThrowStatement(), b->AsThrowStatement());
     case ASTNodeType::kBlockStatement:
       return MatchBlockStatement(a->AsBlockStatement(), b->AsBlockStatement());
     case ASTNodeType::kFunctionPrototype:

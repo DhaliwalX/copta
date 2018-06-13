@@ -23,10 +23,10 @@ Handle<Expression> ASTFactory::NewNullLiteral(Position &loc, Scope *scope)
     return MakeHandle<NullLiteral>(loc, scope);
 }
 
-Handle<Expression> ASTFactory::NewUndefinedLiteral(Position &loc, Scope *scope)
-{
-    return MakeHandle<UndefinedLiteral>(loc, scope);
-}
+// Handle<Expression> ASTFactory::NewUndefinedLiteral(Position &loc, Scope *scope)
+// {
+//     return MakeHandle<UndefinedLiteral>(loc, scope);
+// }
 
 Handle<Expression> ASTFactory::NewThisHolder(Position &loc, Scope *scope)
 {
@@ -45,17 +45,17 @@ Handle<Expression> ASTFactory::NewStringLiteral(Position &loc, Scope *scope,
     return MakeHandle<StringLiteral>(loc, scope, str);
 }
 
-Handle<Expression> ASTFactory::NewRegExpLiteral(Position &loc, Scope *scope,
-    std::string str, const std::vector<RegExpFlags> &flags)
-{
-    return MakeHandle<RegExpLiteral>(loc, scope, str, flags);
-}
+// Handle<Expression> ASTFactory::NewRegExpLiteral(Position &loc, Scope *scope,
+//     std::string str, const std::vector<RegExpFlags> &flags)
+// {
+//     return MakeHandle<RegExpLiteral>(loc, scope, str, flags);
+// }
 
-Handle<Expression> ASTFactory::NewTemplateLiteral(Position &loc, Scope *scope,
-    std::string str)
-{
-    return MakeHandle<TemplateLiteral>(loc, scope, str);
-}
+// Handle<Expression> ASTFactory::NewTemplateLiteral(Position &loc, Scope *scope,
+//     std::string str)
+// {
+//     return MakeHandle<TemplateLiteral>(loc, scope, str);
+// }
 
 Handle<Expression> ASTFactory::NewArrayLiteral(Position &loc, Scope *scope, ProxyArray arr)
 {
@@ -95,10 +95,10 @@ Handle<Expression> ASTFactory::NewMemberExpression(Position &loc, Scope *scope,
     return MakeHandle<MemberExpression>(loc, scope, kind, expr, mem);
 }
 
-Handle<Expression> ASTFactory::NewNewExpression(Position &loc, Scope *scope, Handle<Expression> expr)
-{
-    return MakeHandle<NewExpression>(loc, scope, expr);
-}
+// Handle<Expression> ASTFactory::NewNewExpression(Position &loc, Scope *scope, Handle<Expression> expr)
+// {
+//     return MakeHandle<NewExpression>(loc, scope, expr);
+// }
 
 Handle<Expression> ASTFactory::NewPrefixExpression(Position &loc, Scope *scope,
     PrefixOperation op, Handle<Expression> expr)
@@ -124,22 +124,22 @@ Handle<Expression> ASTFactory::NewAssignExpression(Position &loc, Scope *scope,
     return MakeHandle<AssignExpression>(loc, scope, lhs, rhs);
 }
 
-Handle<Expression> ASTFactory::NewTernaryExpression(Position &loc, Scope *scope,
-    Handle<Expression> first, Handle<Expression> second, Handle<Expression> third)
-{
-    return MakeHandle<TernaryExpression>(loc, scope, first, second, third);
-}
+// Handle<Expression> ASTFactory::NewTernaryExpression(Position &loc, Scope *scope,
+//     Handle<Expression> first, Handle<Expression> second, Handle<Expression> third)
+// {
+//     return MakeHandle<TernaryExpression>(loc, scope, first, second, third);
+// }
 
-Handle<Expression> ASTFactory::NewCommaExpression(Position &loc, Scope *scope,
-    Handle<ExpressionList> l)
-{
-    return MakeHandle<CommaExpression>(loc, scope, l);
-}
+// Handle<Expression> ASTFactory::NewCommaExpression(Position &loc, Scope *scope,
+//     Handle<ExpressionList> l)
+// {
+//     return MakeHandle<CommaExpression>(loc, scope, l);
+// }
 
 Handle<Declaration> ASTFactory::NewDeclaration(Position &loc, Scope *scope, std::string name,
-    Handle<Expression> init)
+    Handle<Expression> init, Type *type)
 {
-    return MakeHandle<Declaration>(loc, scope, name, init);
+    return MakeHandle<Declaration>(loc, scope, name, init, type);
 }
 
 Handle<Expression> ASTFactory::NewDeclarationList(Position &loc, Scope *scope,
@@ -179,9 +179,9 @@ Handle<Expression> ASTFactory::NewDoWhileStatement(Position &loc, Scope *scope,
 }
 
 Handle<Expression> ASTFactory::NewFunctionPrototype(Position &loc, Scope *scope,
-    std::string name, std::vector<std::string> args)
+    std::string name, std::vector<std::string> args, Type *type)
 {
-    return MakeHandle<FunctionPrototype>(loc, scope, name, std::move(args));
+    return MakeHandle<FunctionPrototype>(loc, scope, name, std::move(args), type);
 }
 
 Handle<Expression> ASTFactory::NewFunctionStatement(Position &loc, Scope *scope,
@@ -208,50 +208,50 @@ Handle<Expression> ASTFactory::NewReturnStatement(Position &loc, Scope *scope,
     return MakeHandle<ReturnStatement>(loc, scope, expr);
 }
 
-Handle<Expression> ASTFactory::NewTryCatchStatement(Position &loc, Scope *scope, Handle<Expression> tb,
-        Handle<Expression> catch_expr, Handle<Expression> catch_block, Handle<Expression> finally)
-{
-    return MakeHandle<TryCatchStatement>(loc, scope, tb, catch_expr, catch_block, finally);
-}
+// Handle<Expression> ASTFactory::NewTryCatchStatement(Position &loc, Scope *scope, Handle<Expression> tb,
+//         Handle<Expression> catch_expr, Handle<Expression> catch_block, Handle<Expression> finally)
+// {
+//     return MakeHandle<TryCatchStatement>(loc, scope, tb, catch_expr, catch_block, finally);
+// }
 
-Handle<Expression> ASTFactory::NewBreakStatement(Position &loc, Scope *scope, Handle<Expression> label)
-{
-    return MakeHandle<BreakStatement>(loc, scope, label);
-}
+// Handle<Expression> ASTFactory::NewBreakStatement(Position &loc, Scope *scope, Handle<Expression> label)
+// {
+//     return MakeHandle<BreakStatement>(loc, scope, label);
+// }
 
-Handle<Expression> ASTFactory::NewContinueStatement(Position &loc, Scope *scope,
-    Handle<Expression> label)
-{
-    return MakeHandle<ContinueStatement>(loc, scope, label);
-}
+// Handle<Expression> ASTFactory::NewContinueStatement(Position &loc, Scope *scope,
+//     Handle<Expression> label)
+// {
+//     return MakeHandle<ContinueStatement>(loc, scope, label);
+// }
 
-Handle<Expression> ASTFactory::NewLabelledStatement(Position &loc, Scope *scope,
-    std::string label, Handle<Expression> stmt)
-{
-    return MakeHandle<LabelledStatement>(loc, scope, label, stmt);
-}
+// Handle<Expression> ASTFactory::NewLabelledStatement(Position &loc, Scope *scope,
+//     std::string label, Handle<Expression> stmt)
+// {
+//     return MakeHandle<LabelledStatement>(loc, scope, label, stmt);
+// }
 
-Handle<Expression> ASTFactory::NewCaseClauseStatement(Position &loc, Scope *scope,
-        Handle<Expression> clause, Handle<Expression> stmt)
-{
-    return MakeHandle<CaseClauseStatement>(loc, scope, clause, stmt);
-}
+// Handle<Expression> ASTFactory::NewCaseClauseStatement(Position &loc, Scope *scope,
+//         Handle<Expression> clause, Handle<Expression> stmt)
+// {
+//     return MakeHandle<CaseClauseStatement>(loc, scope, clause, stmt);
+// }
 
-Handle<ClausesList> ASTFactory::NewClausesList()
-{
-    return MakeHandle<ClausesList>();
-}
+// Handle<ClausesList> ASTFactory::NewClausesList()
+// {
+//     return MakeHandle<ClausesList>();
+// }
 
-Handle<Expression> ASTFactory::NewSwitchStatement(Position &loc, Scope *scope,
-        Handle<Expression> expr, Handle<ClausesList> clauses)
-{
-    return MakeHandle<SwitchStatement>(loc, scope, expr, clauses);
-}
+// Handle<Expression> ASTFactory::NewSwitchStatement(Position &loc, Scope *scope,
+//         Handle<Expression> expr, Handle<ClausesList> clauses)
+// {
+//     return MakeHandle<SwitchStatement>(loc, scope, expr, clauses);
+// }
 
-Handle<Expression> ASTFactory::NewThrowStatement(Position &loc, Scope *scope,
-    Handle<Expression> expr)
-{
-    return MakeHandle<ThrowStatement>(loc, scope, expr);
-}
+// Handle<Expression> ASTFactory::NewThrowStatement(Position &loc, Scope *scope,
+//     Handle<Expression> expr)
+// {
+//     return MakeHandle<ThrowStatement>(loc, scope, expr);
+// }
 
 }

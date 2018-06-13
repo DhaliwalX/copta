@@ -7,111 +7,82 @@ namespace jast {
 
 void TypeAnalysis::Visit(NullLiteral *literal)
 {
-}
-
-void TypeAnalysis::Visit(UndefinedLiteral *literal)
-{
+  // nothing
 }
 
 void TypeAnalysis::Visit(ThisHolder *holder)
 {
+  // nothing
 }
 
 void TypeAnalysis::Visit(IntegralLiteral *literal)
 {
+  // nothing
 }
 
 void TypeAnalysis::Visit(StringLiteral *literal)
 {
-}
-
-void TypeAnalysis::Visit(TemplateLiteral *literal)
-{
+  // nothing
 }
 
 void TypeAnalysis::Visit(ArrayLiteral *literal)
 {
-
+  // nothing
 }
 
 void TypeAnalysis::Visit(ObjectLiteral *literal)
 {
-
+  // nothing
 }
 
 void TypeAnalysis::Visit(Identifier *id)
 {
+  // nothing
 }
 
 void TypeAnalysis::Visit(BooleanLiteral *literal)
 {
-}
-
-void TypeAnalysis::Visit(RegExpLiteral *reg)
-{
+  // nothing
 }
 
 void TypeAnalysis::Visit(ArgumentList *args)
 {
+  detector_.Detect(args->AsArgumentList());
 }
 
 void TypeAnalysis::Visit(CallExpression *expr)
 {
+  detector_.Detect(expr->AsCallExpression());
 }
 
 void TypeAnalysis::Visit(MemberExpression *expr)
 {
-}
-
-void TypeAnalysis::Visit(NewExpression *expr)
-{
+  detector_.Detect(expr->AsMemberExpression());
 }
 
 void TypeAnalysis::Visit(PrefixExpression *expr)
 {
+  detector_.Detect(expr->AsPrefixExpression());
 }
 
 void TypeAnalysis::Visit(PostfixExpression *expr)
 {
+  detector_.Detect(expr->AsPostfixExpression());
 }
 
 void TypeAnalysis::Visit(BinaryExpression *expr)
 {
+  detector_.Detect(expr->AsBinaryExpression());
 }
 
 void TypeAnalysis::Visit(AssignExpression *expr)
 {
-  Type *t = detector_.Detect(expr->rhs());
-  if (t == nullptr) {
-    return;
-  }
-
-  Type *l = detector_.Detect(expr->lhs());
-  if (l->IsUnresolvedType()) {
-    auto r = dynamic_cast<UnresolvedType*>(l);
-    if (!r->IsResolved() &&
-        (!t->IsUnresolvedType() ||
-            t->AsUnresolvedType()->IsResolved())) {
-      r->ResolveTo(t);
-      return;
-    }
-  }
-
-  if (!l->Equals(t)) {
-    err(Strings::Raw("Type mismatch in assignment"), expr->AsAssignExpression());
-  }
-}
-
-void TypeAnalysis::Visit(TernaryExpression *expr)
-{
-}
-
-void TypeAnalysis::Visit(CommaExpression *expr)
-{
+  detector_.Detect(expr->AsAssignExpression());
 }
 
 void TypeAnalysis::Visit(Declaration *decl)
 {
+  detector_.Detect(decl->AsDeclaration());
 }
 
 void TypeAnalysis::Visit(DeclarationList *decl_list)
@@ -133,42 +104,38 @@ void TypeAnalysis::Visit(BlockStatement *stmt)
 
 void TypeAnalysis::Visit(ForStatement *stmt)
 {
+  detector_.OpenScope();
+  if (stmt->init())
+    stmt->init()->Accept(this);
+
+  if (stmt->condition())
+    stmt->condition()->Accept(this);
+
+  if (stmt->body())
+    stmt->body()->Accept(this);
+
+  if (stmt->update())
+    stmt->update()->Accept(this);
+
+  detector_.CloseScope();
 }
 
 void TypeAnalysis::Visit(WhileStatement *stmt)
 {
+  if (stmt->condition())
+    stmt->condition()->Accept(this);
+
+  if (stmt->body())
+    stmt->body()->Accept(this);
 }
 
 void TypeAnalysis::Visit(DoWhileStatement *stmt)
 {
-}
+  if (stmt->condition())
+    stmt->condition()->Accept(this);
 
-void TypeAnalysis::Visit(BreakStatement *stmt)
-{
-}
-
-void TypeAnalysis::Visit(ContinueStatement *stmt)
-{
-}
-
-void TypeAnalysis::Visit(ThrowStatement *stmt)
-{
-}
-
-void TypeAnalysis::Visit(TryCatchStatement *stmt)
-{
-}
-
-void TypeAnalysis::Visit(LabelledStatement *stmt)
-{
-}
-
-void TypeAnalysis::Visit(CaseClauseStatement *stmt)
-{
-}
-
-void TypeAnalysis::Visit(SwitchStatement *stmt)
-{
+  if (stmt->body())
+    stmt->body()->Accept(this);
 }
 
 void TypeAnalysis::Visit(FunctionPrototype *proto)

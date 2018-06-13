@@ -69,155 +69,6 @@ private:
     Handle<Expression> body_;
 };
 
-class BreakStatement : public Expression {
-public:
-    BreakStatement(Position &loc, Scope *scope, Handle<Expression> label = nullptr)
-        : Expression(loc, scope), label_{ label }
-    { }
-
-
-    Handle<Expression> label() { return label_; }
-    DEFINE_NODE_TYPE(BreakStatement);
-private:
-    Handle<Expression> label_;
-};
-
-class ContinueStatement : public Expression {
-public:
-    ContinueStatement(Position &loc, Scope *scope, Handle<Expression> label = nullptr)
-        : Expression(loc, scope), label_{ label }
-    { }
-
-
-    Handle<Expression> label() { return label_; }
-
-    DEFINE_NODE_TYPE(ContinueStatement);
-private:
-    Handle<Expression> label_;
-};
-
-class ThrowStatement : public Expression {
-public:
-    ThrowStatement(Position &loc, Scope *scope, Handle<Expression> expr)
-        : Expression(loc, scope), expr_{expr}
-    { }
-
-
-    Handle<Expression> expr() { return expr_; }
-
-    DEFINE_NODE_TYPE(ThrowStatement);
-private:
-    Handle<Expression> expr_;
-};
-
-class TryCatchStatement : public Expression {
-public:
-    TryCatchStatement(Position &loc, Scope *scope, Handle<Expression> try_block,
-            Handle<Expression> catch_expr, Handle<Expression> catch_block, Handle<Expression> finally)
-        : Expression(loc, scope), try_block_{ try_block }, catch_expr_{ catch_expr },
-          catch_block_{ catch_block }, finally_{ finally }
-    { }
-
-
-    Handle<Expression> try_block() { return try_block_; }
-    Handle<Expression> catch_expr() { return catch_expr_; }
-    Handle<Expression> catch_block() { return catch_block_; }
-    Handle<Expression> finally() { return finally_; }
-    DEFINE_NODE_TYPE(TryCatchStatement);
-private:
-    Handle<Expression> try_block_;
-    Handle<Expression> catch_expr_;
-    Handle<Expression> catch_block_;
-    Handle<Expression> finally_;
-};
-
-class LabelledStatement : public Expression {
-public:
-    LabelledStatement(Position &loc, Scope *scope, std::string &label, Handle<Expression> expr)
-        : Expression(loc, scope), label_{ label }, expr_{ expr }
-    { }
-
-
-    Handle<Expression> expr() { return expr_; }
-    std::string &label() { return label_; }
-
-    DEFINE_NODE_TYPE(LabelledStatement);
-private:
-    std::string label_;
-    Handle<Expression> expr_;
-};
-
-class CaseClauseStatement : public Expression {
-public:
-    CaseClauseStatement(Position &loc, Scope *scope,
-        Handle<Expression> clause, Handle<Expression> stmt)
-        : Expression(loc, scope), clause_{ clause }, stmt_{ stmt }
-    { }
-
-
-    Handle<Expression> clause() { return clause_; }
-    Handle<Expression> stmt() { return stmt_; }
-
-    DEFINE_NODE_TYPE(CaseClauseStatement);
-private:
-    Handle<Expression> clause_;
-    Handle<Expression> stmt_;
-};
-
-// helper class to store all cases under switch statement
-class ClausesList : public RefCountObject {
-public:
-    using iterator = std::vector<Handle<CaseClauseStatement>>::iterator;
-
-    ClausesList() : default_ { nullptr }, cases_{ }
-    { }
-
-    bool HasDefaultCase() { return !!def(); }
-
-    bool SetDefaultCase(Handle<Expression> def)
-    {
-        if (HasDefaultCase())
-            return false;
-
-        default_ = def;
-        return true;
-    }
-
-    void PushCase(Handle<CaseClauseStatement> stmt) { cases_.push_back(stmt); }
-
-    virtual ~ClausesList()
-    {
-    }
-
-    std::vector<Handle<CaseClauseStatement>> *cases() { return &cases_; }
-    Handle<Expression> def() { return default_; }
-
-    iterator begin() { return cases_.begin(); }
-    iterator end() { return cases_.end(); }
-
-    auto Size() { return cases_.size(); }
-private:
-    Handle<Expression> default_;
-    std::vector<Handle<CaseClauseStatement>> cases_;
-};
-
-class SwitchStatement : public Expression {
-public:
-    SwitchStatement(Position &loc, Scope *scope, Handle<Expression> expr,
-            Handle<ClausesList> clauses)
-        : Expression(loc, scope), expr_{ expr }, clauses_{ clauses }
-    { }
-
-    bool HasDefaultCase() { return clauses_->HasDefaultCase(); }
-    Handle<Expression> default_clause() { return clauses_->def(); }
-    Handle<ClausesList> clauses() { return clauses_; }
-    Handle<Expression> expr() { return expr_; }
-    DEFINE_NODE_TYPE(SwitchStatement);
-private:
-    Handle<Expression> expr_;
-    Handle<ClausesList> clauses_;
-};
-
 class DoWhileStatement : public Expression {
     using ExprPtr = Handle<Expression>;
     DEFINE_NODE_TYPE(DoWhileStatement);
@@ -240,14 +91,16 @@ class FunctionPrototype : public Expression {
     DEFINE_NODE_TYPE(FunctionPrototype);
 public:
     FunctionPrototype(Position &loc, Scope *scope, std::string name,
-        std::vector<std::string> args)
-        : Expression(loc, scope), name_{ name }, args_{ std::move(args) }
+        std::vector<std::string> args, Type *type)
+        : Expression(loc, scope), name_{ name }, args_{ std::move(args) }, type_(type)
     { }
     const std::string &GetName() const;
     const std::vector<std::string> &GetArgs() const;
+    Type *GetType() { return type_;}
 private:
     std::string name_;
     std::vector<std::string> args_;
+    Type *type_;
 };
 
 // FunctionStatement - captures the function statement
