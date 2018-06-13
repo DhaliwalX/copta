@@ -1019,6 +1019,10 @@ Handle<Expression> Parser::ParseTypeDefinition() {
     } else if (tok == FUNCTION) {
         Type *fun = ParseFunctionType();
         TypeRegistry::Register(name, fun);
+    } else if (tok == MUL) {
+        advance();
+        Type *base = ParseType();
+        TypeRegistry::Register(name, TypeSystem::getPointerType(base));
     } else {
         throw SyntaxError(lex()->currentToken(), "expected a type expression");
     }
