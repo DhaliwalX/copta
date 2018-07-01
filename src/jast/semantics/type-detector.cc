@@ -2,6 +2,7 @@
 #include "jast/semantics/symbol-table.h"
 #include "jast/types/type-system.h"
 #include "jast/strings.h"
+#include "jast/ir/value.h"
 #include "jast/semantics/error.h"
 
 namespace jast {
@@ -11,8 +12,12 @@ class TypeDetectorImpl {
 public:
   Type *TypeOf(Handle<Expression> expr) {
     switch (expr->type()) {
+      case ASTNodeType::kNullLiteral:
+        return TypeSystem::getUndefinedType();
       case ASTNodeType::kIntegralLiteral:
         return TypeOfInteger(expr->AsIntegralLiteral());
+      case ASTNodeType::kBooleanLiteral:
+        return TypeSystem::getIntegerType();
       case ASTNodeType::kStringLiteral:
         return TypeOfString(expr->AsStringLiteral());
       case ASTNodeType::kDeclaration:
@@ -23,10 +28,14 @@ public:
         return TypeOfArray(expr->AsArrayLiteral());
       case ASTNodeType::kBinaryExpression:
         return TypeOfBinaryExpression(expr->AsBinaryExpression());
-
       case ASTNodeType::kAssignExpression:
         return TypeOfAssignExpression(expr->AsAssignExpression());
-
+      case ASTNodeType::kMemberExpression:
+        return TypeOfMemberExpression(expr->AsMemberExpression());
+      case ASTNodeType::kPrefixExpression:
+        return TypeOfPrefixExpression(expr->AsPrefixExpression());
+      case ASTNodeType::kPostfixExpression:
+        return TypeOfPostfixExpression(expr->AsPostfixExpression());
       default:
         assert(0 && "Not implemented");
     }
@@ -67,6 +76,7 @@ private:
     }
 
     err(Strings::Format("{} used before definition", id->GetName()), id);
+    return nullptr;
   }
 
   Type *TypeOfBooleanLiteral(Handle<BooleanLiteral> literal) {
@@ -174,6 +184,21 @@ private:
 
         return elementType;
       }
+
+      case PrefixOperation::kAddr: {
+        Type *base = TypeOf(expr->expr());
+        return TypeSystem::getPointerType(base);
+      }
+
+      case PrefixOperation::kDeref: {
+        Type *base = TypeOf(expr->expr());
+        if (!base->IsPointerType()) {
+          err(Strings::Raw("non-pointer type dereferenced"), expr->expr());
+          return nullptr;
+        }
+
+        return base->AsPointerType()->getBaseElementType();
+      }
       default:
         return nullptr;
     }
@@ -208,6 +233,7 @@ private:
         }
 
         err(Strings::Raw("wrong type for binary operation"), expr);
+        return nullptr;
     }
   }
 
@@ -223,7 +249,7 @@ private:
       return nullptr;
     }
 
-    auto type = TypeSystem::getUnresolvedType();
+    auto type = decl->type();
     table_.PutSymbol(name, type);
     return type;
   }
@@ -238,6 +264,10 @@ private:
 
   void closeScope() {
     table_.CloseScope();
+  }
+
+  void addSymbol(const std::string &name, Type *t) {
+    table_.PutSymbol(name, t);
   }
 private:
   std::vector<SemanticError> errs;
@@ -258,6 +288,10 @@ void TypeDetector::OpenScope() {
 
 void TypeDetector::CloseScope() {
   impl_->closeScope();
+}
+
+void TypeDetector::AddSymbol(const std::string &name, Type *t) {
+  impl_->addSymbol(name, t);
 }
 
 std::vector<SemanticError> &TypeDetector::Errors() {

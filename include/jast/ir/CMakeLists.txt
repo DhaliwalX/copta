@@ -1,0 +1,9 @@
+set(JAST_HEADER_FILES
+    ${CMAKE_CURRENT_SOURCE_DIR}/basic-block.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/debug-info.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/function.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/instruction.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/instructions.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/value.h
+    ${JAST_HEADER_FILES}
+    PARENT_SCOPE)

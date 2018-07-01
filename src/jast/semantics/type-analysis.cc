@@ -4,6 +4,17 @@
 
 namespace jast {
 
+void TypeAnalysis::setCurrentFunctionType(FunctionType *t) {
+  currentFunctionStack.push_back(t);
+}
+
+FunctionType *TypeAnalysis::currentFunctionType() {
+  return currentFunctionStack.back();
+}
+
+void TypeAnalysis::removeCurrentFunctionType() {
+  currentFunctionStack.pop_back();
+}
 
 void TypeAnalysis::Visit(NullLiteral *literal)
 {
@@ -77,7 +88,11 @@ void TypeAnalysis::Visit(BinaryExpression *expr)
 
 void TypeAnalysis::Visit(AssignExpression *expr)
 {
-  detector_.Detect(expr->AsAssignExpression());
+  Type *rhs = detector_.Detect(expr->rhs());
+  Type *lhs = detector_.Detect(expr->lhs());
+  if (rhs != lhs) {
+    err(Strings::Raw("Type mismatch in assignment"), expr->AsAssignExpression());
+  }
 }
 
 void TypeAnalysis::Visit(Declaration *decl)
@@ -140,22 +155,58 @@ void TypeAnalysis::Visit(DoWhileStatement *stmt)
 
 void TypeAnalysis::Visit(FunctionPrototype *proto)
 {
+
 }
 
 void TypeAnalysis::Visit(FunctionStatement *stmt)
 {
+  auto proto = stmt->proto();
+  FunctionType *t = proto->GetType()->AsFunctionType();
+  detector_.AddSymbol(proto->GetName(), t);
+
+  setCurrentFunctionType(t);
+  // function scope starts
+  detector_.OpenScope();
+  auto &args = proto->GetArgs();
+  int i = 0;
+  for (auto arg_type : t->getArgumentsTypes()) {
+    detector_.AddSymbol(args[i++], arg_type);
+  }
+
+  visit(stmt->body());
+  detector_.CloseScope();
+  removeCurrentFunctionType();
 }
 
 void TypeAnalysis::Visit(IfStatement *stmt)
 {
+  auto t = detector_.Detect(stmt->condition());
+  if (!t->IsIntegerType()) {
+    err(Strings::Format("condition should be an integer type"), stmt->condition());
+  }
+
+  visit(stmt->body());
 }
 
 void TypeAnalysis::Visit(IfElseStatement *stmt)
 {
+  auto t = detector_.Detect(stmt->condition());
+  if (!t->IsIntegerType()) {
+    err(Strings::Format("condition should be an integer type"), stmt->condition());
+  }
+
+  visit(stmt->body());
+  visit(stmt->els());
 }
 
 void TypeAnalysis::Visit(ReturnStatement *stmt)
 {
+  auto t = detector_.Detect(stmt->expr());
+  auto curr = currentFunctionType();
+  auto ret_type = curr->getReturnType();
+  if (ret_type != t) {
+    err(Strings::Format("return type mismatch"), stmt->expr());
+  }
 }
 
 void TypeAnalysis::dump() {

@@ -1,5 +1,6 @@
 #include "jast/parser-builder.h"
 #include "jast/semantics/type-analysis.h"
+#include "jast/ir/code-generator.h"
 #include "dump-ast.h"
 
 #include <iostream>
@@ -26,6 +27,10 @@ int main()
 
     ast->Accept(&analysis);
     analysis.dump();
+
+    CodeGenerator cg;
+    auto mod = cg.RunOn(ast);
+    mod->dump(std::cout);
     builder.context()->Counters().dump();
     return 0;
 }

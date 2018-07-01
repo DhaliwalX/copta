@@ -276,6 +276,7 @@ enum class MemberAccessKind {
 //            kCall   e
 //           /     \                    |
 //          a       (g)
+// TODO: Remove this
 class CallExpression : public Expression {
 public:
     CallExpression(Position &loc, Scope *scope, MemberAccessKind kind,

@@ -235,10 +235,10 @@ Handle<Expression> Parser::ParsePrimary()
 
         if (tok != RPAREN)
             throw SyntaxError(lex()->currentToken(), "expected a ')'");
-    } else if (tok == LBRACK) {
-        result = ParseArrayLiteral();
-    } else if (tok == LBRACE) {
-        result = ParseObjectLiteral();
+    // } else if (tok == LBRACK) {
+        // result = ParseArrayLiteral();
+    // } else if (tok == LBRACE) {
+        // result = ParseObjectLiteral();
     } else if (tok == FUNCTION) {
         result = ParseFunctionStatement();
         return result;
@@ -387,7 +387,7 @@ Handle<Expression> Parser::ParseCallExpression()
         } else {
             break;
         }
-        member = builder()->NewCallExpression(kind, member, temp);
+        member = builder()->NewMemberExpression(kind, member, temp);
     }
 
     return member;
@@ -603,7 +603,7 @@ Handle<Expression> Parser::ParseIfStatement()
         result = builder()->NewIfElseStatement(condition, body,
             ParseElseBranch());
     } else {
-        result = builder()->NewIfStatement(condition, body);
+        result = builder()->NewIfElseStatement(condition, body, nullptr);
     }
 
     return result;

@@ -7,6 +7,8 @@
 
 namespace jast {
 
+class Type;
+
 class TypeAnalysis : public ASTVisitor {
 public:
   TypeAnalysis() = default;
@@ -23,9 +25,14 @@ AST_NODE_LIST(DECLARE_VISITOR_METHOD)
     return errors_;
   }
 
+  void setCurrentFunctionType(FunctionType *t);
+  void removeCurrentFunctionType();
+  FunctionType *currentFunctionType();
+
   void dump();
 private:
   std::vector<SemanticError> errors_;
+  std::vector<FunctionType*> currentFunctionStack;
   TypeDetector detector_;
 };
 

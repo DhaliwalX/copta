@@ -4,6 +4,7 @@
 #include <map>
 #include <vector>
 #include <string>
+#include <cassert>
 
 namespace jast {
 
@@ -39,9 +40,12 @@ using String = std::string;
 
 static inline std::string type_id_name(TypeID id) {
     switch (id) {
-#define CASE(t) case TypeID::t: return #t;
-TYPE_LIST(CASE)
-#undef CASE
+        case TypeID::Integer:
+            return "i64";
+
+        case TypeID::String:
+            return "str";
+
         default:
             return "undef";
     }
@@ -316,7 +320,7 @@ public:
         return return_type_;
     }
 
-    Vector<Type*> getArgumentsTypes() {
+    Vector<Type*> &getArgumentsTypes() {
         return args_types_;
     }
 

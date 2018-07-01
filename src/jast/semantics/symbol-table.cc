@@ -1,8 +1,13 @@
 #include "jast/semantics/symbol-table.h"
 #include "jast/types/type.h"
+#include "jast/ir/value.h"
 #include <iostream>
 
 namespace jast {
+
+SymbolDefinition::SymbolDefinition(const std::string &name, Type *type, Ref<Value> value)
+  : name_{name}, type_{ type}, depth_{0}, last_{nullptr}, next_{nullptr}, value_{value}
+{ }
 
 SymbolTable::SymbolTable()
   : entries_(1)
@@ -43,11 +48,16 @@ SymbolDefinition *SymbolTable::GetSymbolInCurrentScope(const std::string &name) 
 }
 
 SymbolDefinition *SymbolTable::PutSymbol(const std::string &name, Type *type) {
+  return PutSymbol(name, type, nullptr);
+}
+
+SymbolDefinition *SymbolTable::PutSymbol(const std::string &name, Type *type,
+    Ref<Value> value) {
   auto sym = GetSymbol(name);
   if (sym != nullptr && sym->depth_ == currentDepth_) {
     return nullptr;
   }
-  auto def = new SymbolDefinition(name, type);
+  auto def = new SymbolDefinition(name, type, value);
   def->depth_ = currentDepth_;
 
   if (sym) {

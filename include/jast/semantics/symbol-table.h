@@ -3,10 +3,13 @@
 
 #include "jast/types/type-system.h"
 #include "jast/macros.h"
+#include "jast/handle.h"
 
 #include <list>
 
 namespace jast {
+
+class Value;
 
 class SymbolDefinition {
   friend class SymbolTable;
@@ -14,6 +17,8 @@ public:
   SymbolDefinition(const std::string &name, Type *type)
     : name_{ name }, type_{ type}, depth_{ 0 }, last_{ nullptr }, next_{ nullptr }
   { }
+
+  SymbolDefinition(const std::string &name, Type *type, Ref<Value> value);
 
   std::string &name() {
     return name_;
@@ -27,6 +32,10 @@ public:
     return depth_;
   }
 
+  Ref<Value> value() {
+    return value_;
+  }
+
   void dump() const;
 private:
   std::string name_;
@@ -34,6 +43,7 @@ private:
   int depth_;
   SymbolDefinition *last_;
   SymbolDefinition *next_;
+  Ref<Value> value_;
 };
 
 class SymbolTable {
@@ -46,6 +56,7 @@ public:
   SymbolDefinition *GetSymbolInCurrentScope(const std::string &name);
 
   SymbolDefinition *PutSymbol(const std::string &name, Type *type);
+  SymbolDefinition *PutSymbol(const std::string &name, Type *type, Ref<Value> value);
 
   void OpenScope();
   void CloseScope();

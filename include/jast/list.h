@@ -8,11 +8,16 @@ namespace jast {
 template <typename ListType>
 class ListIterator {
 public:
+  enum Tag {
+    kBegin,
+    kEnd
+  };
   using DataType = ListType;
   using reference = ListType&;
 
-  explicit ListIterator(ListType *element)
-    : start_((element)), element_((element))
+  explicit ListIterator(ListType *element, Tag tag)
+    : start_(tag == kBegin ? element : nullptr),
+      element_(tag == kEnd ? nullptr : (element))
   { }
 
   ListIterator(ListType *start, ListType *point)
@@ -66,7 +71,7 @@ public:
 
 /**
  * Embeddable doubly linked list
- * List is not the owner of the members.
+ * List is not the owner of the members. It requires a default constructor
  */
 template <typename T>
 class List {
@@ -76,10 +81,14 @@ public:
   using reference = T&;
   using iterator = ListIterator<List<T>>;
 
+protected:
   List() {
-    Next = (this);
-    Previous = (this);
+    Next = nullptr;
+    Previous = nullptr;
+    Last = (T*)this;
   }
+
+public:
 
   /**
    * Do nothing destructor
@@ -89,22 +98,27 @@ public:
   /**
    * append to the list
    */
-  void Append(List<T> *element) {
-    element->Previous = Previous;
-    element->Next = (this);
-    Previous = element;
+  void Append(T *element) {
+    element->Previous = Last->Previous;
+    if (Last->Previous) {
+      Last->Previous->Next = element;
+    } else {
+      Next = element;
+    }
+    Last = element;
   }
 
   /**
    * removes the last element from the list
    */
   T *RemoveLast() {
-    T *ret = Previous;
-    if (Previous != Next) {
-      Previous = Previous->Previous;
-      Previous->Previous->Next = (this);
-    }
+    T *ret = Last;
 
+    if (Last->Previous) {
+      return nullptr;
+    }
+    Last = Last->Previous;
+    Last->Next = nullptr;
     return ret;
   }
 
@@ -115,7 +129,7 @@ public:
     T *ret = Next;
     if (Next == Previous) {
       // single element, don't have to do anything
-      return nullptr;
+      return this;
     }
 
     Previous->Next = Next;
@@ -133,14 +147,35 @@ public:
   }
 
   iterator end() {
-    return iterator(nullptr);
+    return iterator(Last);
+  }
+
+  T* AsType() {
+    return dynamic_cast<T*>(this);
+  }
+
+  T* next() {
+    return (Next);
+  }
+
+  const T* next() const {
+    return (Next);
+  }
+
+  T* prev() {
+    return Previous;
+  }
+
+  const T* prev() const {
+    return Previous;
   }
 
   /**
    * inserts element after `point` and returns iterator to the inserted
    * element.
    */
-  iterator Insert(iterator point, List<T> *element) {
+  iterator Insert(iterator point, T *element) {
+    assert(point->Next != nullptr);
     element->Next = point->Next;
     element->Previous = &(*point);
     point->Next = element;
@@ -154,8 +189,11 @@ public:
     return iterator(this, point->RemoveSelf());
   }
 
-  List<T> *Next;
-  List<T> *Previous;
+  T *Next;
+  T *Previous;
+
+private:
+  T *Last;
 };
 
 }

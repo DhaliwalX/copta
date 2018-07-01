@@ -39,6 +39,8 @@ add_subdirectory(./src/codegen)
 add_subdirectory(./include/codegen)
 add_subdirectory(./include/jast/semantics)
 add_subdirectory(./src/jast/semantics)
+add_subdirectory(./include/jast/ir)
+add_subdirectory(./src/jast/ir)
 
 add_subdirectory(./third_party/fmt EXCLUDE_FROM_ALL)
 add_library(jast STATIC ${JAST_HEADER_FILES} ${JAST_SOURCE_FILES})

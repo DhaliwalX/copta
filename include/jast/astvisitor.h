@@ -23,6 +23,7 @@ AST_NODE_LIST(DECLARE_VISITOR_METHOD)
 class ASTVisitor : public BasicASTVisitor {
 public:
     void visit(Handle<Expression> expr) { expr->Accept(this); }
+    void visit(Expression *expr) { expr->Accept(this); }
 #define DECLARE_VISITOR_METHOD(type) void Visit(type *) override { throw std::runtime_error("Not implemented walker for " #type); }
 AST_NODE_LIST(DECLARE_VISITOR_METHOD)
 #undef DECLARE_VISITOR_METHOD

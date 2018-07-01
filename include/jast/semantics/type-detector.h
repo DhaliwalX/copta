@@ -20,6 +20,7 @@ public:
 
   void OpenScope();
   void CloseScope();
+  void AddSymbol(const std::string &name, Type *t);
 private:
   TypeDetectorImpl *impl_;
 };

@@ -119,6 +119,10 @@ public:
     return ptr_;
   }
 
+  inline const T *get() const {
+    return ptr_;
+  }
+
   template <class B>
   inline operator Ref<B>() {
       // typename std::enable_if<std::is_base_of<B, T>::value>::type;
