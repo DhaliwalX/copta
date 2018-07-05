@@ -107,7 +107,7 @@ public:
 
     // create a new node representing JavaScript function statement
     // and fuunction expression
-    Handle<Expression> NewFunctionStatement(Handle<FunctionPrototype> proto, Handle<Expression> body);
+    Handle<Expression> NewFunctionStatement(Handle<FunctionPrototype> proto, Handle<Expression> body, bool e = false);
 
     // create a new node representing JavaScript if statement
     Handle<Expression> NewIfStatement(Handle<Expression> condition, Handle<Expression> then);

@@ -106,6 +106,7 @@ public:
     Handle<Declaration> ParseDeclaration();
 
     Handle<Expression> ParseProgram();
+    Handle<Expression> ParseExternFunction();
 
     Handle<Expression> ParseForInStatement(Handle<Expression> inexpr);
 

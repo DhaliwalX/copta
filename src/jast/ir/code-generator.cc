@@ -367,6 +367,14 @@ public:
     function->setName(name);
     auto ftype = statement->proto()->GetType()->AsFunctionType();
     function->setType(ftype);
+
+    manager_->PutSymbol(name, ftype, function);
+    mod_->Add(name, function);
+
+    if (statement->IsExtern()) {
+      function->setExtern(true);
+      return function;
+    }
     Ref<BasicBlock> bb(new BasicBlock(function, "entry"));
     function->AddBB(bb);
 
@@ -378,14 +386,13 @@ public:
     builder_.SetBasicBlock(bb);
 
     GenParams(statement->proto()->GetArgs(), ftype);
-    manager_->PutSymbol(name, ftype, function);
     RunOn(statement->body());
 
-    mod_->Add(name, function);
 
     // restore the builder
     builder_.SetFunction(old);
     builder_.SetBasicBlock(oldbb);
+    return function;
   }
 
   Ref<Value> GenForStatement(Ref<ForStatement> f) {

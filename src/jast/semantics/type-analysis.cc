@@ -164,6 +164,9 @@ void TypeAnalysis::Visit(FunctionStatement *stmt)
   FunctionType *t = proto->GetType()->AsFunctionType();
   detector_.AddSymbol(proto->GetName(), t);
 
+  if (stmt->IsExtern()) {
+    return;
+  }
   setCurrentFunctionType(t);
   // function scope starts
   detector_.OpenScope();

@@ -14,6 +14,9 @@ public:
     functions_[name] = fun;
   }
 
+  Ref<Function> get(std::string name) {
+    return functions_[name];
+  }
 
   std::map<std::string, Ref<Function>> &functions() {
     return functions_;

@@ -181,10 +181,10 @@ Handle<Expression> ASTBuilder::NewFunctionPrototype(std::string name,
 }
 
 Handle<Expression> ASTBuilder::NewFunctionStatement(Handle<FunctionPrototype> proto,
-    Handle<Expression> body)
+    Handle<Expression> body, bool e)
 {
     COUNT();
-    return save(factory()->NewFunctionStatement(locator()->loc(), manager()->current(), proto, body));
+    return save(factory()->NewFunctionStatement(locator()->loc(), manager()->current(), proto, body, e));
 }
 
 Handle<Expression> ASTBuilder::NewIfStatement(Handle<Expression> condition, Handle<Expression> then)

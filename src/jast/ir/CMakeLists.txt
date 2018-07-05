@@ -5,6 +5,8 @@ set(JAST_HEADER_FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/function.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/module.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/instruction.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/interp.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/interp-native-functions.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/value.cc
     ${JAST_HEADER_FILES}
     PARENT_SCOPE)

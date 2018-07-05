@@ -830,6 +830,13 @@ Handle<Expression> Parser::ParseFunctionStatement()
     return builder()->NewFunctionStatement(proto, body);
 }
 
+Handle<Expression> Parser::ParseExternFunction()
+{
+    advance(); // eat extern;
+    auto proto = ParseFunctionPrototype();
+    return builder()->NewFunctionStatement(proto, nullptr, true);
+}
+
 Handle<Expression> Parser::ParseBlockStatement()
 {
     Handle<ExpressionList> stmts = builder()->NewExpressionList();
@@ -1223,6 +1230,9 @@ Handle<Expression> Parser::ParseStatement()
         return ParseForStatement();
     case FUNCTION:
         return ParseFunctionStatement();
+
+    case EXTERN:
+        return ParseExternFunction();
     case LBRACE:
         return ParseBlockStatement();
     case RETURN:

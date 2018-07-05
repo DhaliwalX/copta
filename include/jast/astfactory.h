@@ -92,7 +92,7 @@ public:
         std::string name, std::vector<std::string> args, Type *type);
 
     virtual Handle<Expression> NewFunctionStatement(Position &loc, Scope *scope,
-        Handle<FunctionPrototype> proto, Handle<Expression> body);
+        Handle<FunctionPrototype> proto, Handle<Expression> body, bool e);
 
     virtual Handle<Expression> NewIfStatement(Position &loc, Scope *scope,
         Handle<Expression> condition, Handle<Expression> then);

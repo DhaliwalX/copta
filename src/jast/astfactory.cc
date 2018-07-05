@@ -185,9 +185,9 @@ Handle<Expression> ASTFactory::NewFunctionPrototype(Position &loc, Scope *scope,
 }
 
 Handle<Expression> ASTFactory::NewFunctionStatement(Position &loc, Scope *scope,
-    Handle<FunctionPrototype> proto, Handle<Expression> body)
+    Handle<FunctionPrototype> proto, Handle<Expression> body, bool e)
 {
-    return MakeHandle<FunctionStatement>(loc, scope, proto, body);
+    return MakeHandle<FunctionStatement>(loc, scope, proto, body, e);
 }
 
 Handle<Expression> ASTFactory::NewIfStatement(Position &loc, Scope *scope,

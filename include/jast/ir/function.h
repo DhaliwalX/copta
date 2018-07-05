@@ -24,6 +24,13 @@ public:
     return this;
   }
 
+  void setExtern(bool e) { extern_ = e; }
+  bool isExtern() const { return extern_; }
+
+  Ref<BasicBlock> getEntry() {
+    return bbs_[0];
+  }
+
   iterator begin() {
     return bbs_.begin();
   }
@@ -60,6 +67,7 @@ private:
   std::vector<Ref<BasicBlock>> bbs_;
   FunctionType *type_;
   std::string name_;
+  bool extern_;
 };
 
 }

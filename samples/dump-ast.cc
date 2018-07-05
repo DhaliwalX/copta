@@ -669,7 +669,11 @@ void DumpAST::Visit(FunctionStatement *stmt)
     os_tabbed() << "FunctionBody {\n";
     tab()++;
     os_tabbed();
-    stmt->body()->Accept(this);
+    if (stmt->IsExtern()) {
+        os() << "[native]\n";
+    } else {
+        stmt->body()->Accept(this);
+    }
     tab()--;
     os_tabbed() << "}\n";
     tab()--;
@@ -712,12 +716,14 @@ void DumpAST::Visit(IfElseStatement *stmt)
     stmt->body()->Accept(this);
     tab()--;
 
-    os_tabbed() << "FalseBody {\n";
-    tab()++;
-    os_tabbed();
-    stmt->els()->Accept(this);
-    tab()--;
-    os_tabbed() << "}\n";
+    if (stmt->els()) {
+        os_tabbed() << "FalseBody {\n";
+        tab()++;
+        os_tabbed();
+        stmt->els()->Accept(this);
+        tab()--;
+        os_tabbed() << "}\n";
+    }
     tab()--;
     os_tabbed() <<"}\n";
 }

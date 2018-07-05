@@ -1,7 +1,9 @@
 #include "jast/parser-builder.h"
 #include "jast/semantics/type-analysis.h"
 #include "jast/ir/code-generator.h"
+#include "jast/ir/interp-native-functions.h"
 #include "dump-ast.h"
+#include "jast/ir/interp.h"
 
 #include <iostream>
 #include <sstream>
@@ -31,6 +33,12 @@ int main()
     CodeGenerator cg;
     auto mod = cg.RunOn(ast);
     mod->dump(std::cout);
+
+    // register native functions
+    internal::RegisterNativeFunction f("print", &jast::internal::print);
+
+    internal::Interpreter i;
+    i.Execute(mod);
     builder.context()->Counters().dump();
     return 0;
 }

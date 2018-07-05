@@ -4,6 +4,7 @@
 #include "jast/ir/debug-info.h"
 
 #include "jast/types/type.h"
+#include "jast/types/type-system.h"
 #include "jast/list.h"
 #include "jast/handle.h"
 
@@ -58,6 +59,9 @@ public:
 
 class Constant : public Value {
 public:
+  Constant(Type *type)
+    : type_{ type }
+  { }
   virtual int64_t AsInt() const = 0;
   virtual std::string AsStr() const = 0;
   virtual bool IsInt() const { return type_->IsIntegerType(); }
@@ -73,7 +77,7 @@ private:
 class ConstantInt : public Constant {
 public:
   explicit ConstantInt(int64_t val)
-    : value_{ val }
+    : Constant(TypeSystem::getIntegerType()), value_{ val }
   { }
   int64_t AsInt() const override {
     return value_;
@@ -91,7 +95,7 @@ private:
 class ConstantStr : public Constant {
 public:
   explicit ConstantStr(const std::string &val)
-    : value_{val}
+    : Constant(TypeSystem::getStringType()), value_{val}
   { }
 
   std::string AsStr() const override {

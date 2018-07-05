@@ -22,6 +22,13 @@ public:
     instructions_.erase(i);
   }
 
+  bool IsBasicBlock() const override {
+    return true;
+  }
+  BasicBlock *AsBasicBlock() override {
+    return this;
+  }
+
   iterator insert(iterator pos, Ref<Instruction> i) {
     return instructions_.insert(pos, i);
   }

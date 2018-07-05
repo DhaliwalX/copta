@@ -108,16 +108,17 @@ class FunctionStatement : public Expression {
     DEFINE_NODE_TYPE(FunctionStatement);
 public:
     FunctionStatement(Position &loc, Scope *scope,
-        Handle<FunctionPrototype> proto, Handle<Expression> body)
-        : Expression(loc, scope), proto_{ (proto) }, body_{ body }
+        Handle<FunctionPrototype> proto, Handle<Expression> body, bool ext)
+        : Expression(loc, scope), proto_{ (proto) }, body_{ body }, extern_{ ext }
     { }
 
-
+    bool IsExtern() const { return extern_;}
     Handle<FunctionPrototype> proto() { return proto_; }
     Handle<Expression> body() { return body_; }
 private:
     Handle<FunctionPrototype> proto_;
     Handle<Expression> body_;
+    bool extern_;
 };
 
 class IfStatement : public Expression {

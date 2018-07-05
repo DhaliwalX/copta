@@ -53,10 +53,23 @@ public:
       ptr_->increment(); // defined in ReferenceCount
   }
 
+  // Ref(Ref<T> &&ref)
+  //   : ptr_{ref.ptr_}
+  // {
+  //   ref.ptr_ = nullptr;
+  // }
+
   // Destructor
   ~Ref() {
     clear();
   }
+
+  // Ref<T> &operator=(Ref<T> &&ref) {
+  //   clear();
+  //   ptr_ = ref.ptr_;
+  //   ref.ptr_ = nullptr;
+  //   return *this;
+  // }
 
   Ref<T> &operator=(const Ref<T> &ref) {
     clear();
@@ -133,6 +146,10 @@ private:
   T *ptr_;
 };
 
+template <class B, class C>
+inline Ref<B> cast(Ref<C> r) {
+  return Ref<B>(dynamic_cast<B*>(r.get()));
+}
 
 template <typename T>
 using Handle = Ref<T>;
