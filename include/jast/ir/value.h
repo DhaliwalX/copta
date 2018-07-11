@@ -10,6 +10,7 @@
 
 #include <iosfwd>
 #include <list>
+#include <algorithm>
 
 namespace jast {
 
@@ -25,6 +26,9 @@ public:
   virtual void print(std::ostream &os) const = 0;
 
   DebugInfo &debug_info() { return debug_info_; }
+
+  auto &user_list() { return user_list_; }
+  const auto &user_list() const { return user_list_; }
 
   auto &use_list() { return use_list_; }
   const auto &use_list() const { return use_list_; }
@@ -42,13 +46,27 @@ public:
     debug_info_ = debug_info;
   }
 
+  void RemoveUse(Ref<Value> use) {
+    std::remove_if(use_list_.begin(), use_list_.end(), [&](Ref<Value> &u) { return u == use; });
+  }
+
+  void RemoveUser(Ref<Value> user) {
+    std::remove_if(user_list_.begin(), user_list_.end(), [&](Ref<Value> &u) { return u == user; });
+  }
+
   void AddUser(Ref<Value> value) {
+    user_list_.push_back(value);
+    value->AddUse(this);
+  }
+
+  void AddUse(Ref<Value> value) {
     use_list_.push_back(value);
   }
 
   virtual Type *getType() = 0;
 private:
   std::list<Ref<Value>> use_list_;
+  std::list<Ref<Value>> user_list_;
   DebugInfo debug_info_;
 };
 
@@ -115,18 +133,23 @@ private:
 // special class for holding the logic for the parameter
 class Parameter : public Value {
 public:
-  explicit Parameter(Type *type)
-    : type_{ type }
+  explicit Parameter(Type *type, int id)
+    : type_{ type }, id_{id}
   { }
 
   Type *getType() override {
     return type_;
   }
 
+  int getId() const {
+    return id_;
+  }
+
   void print(std::ostream &os) const override;
 
 private:
   Type *type_;
+  int id_;
 };
 
 }

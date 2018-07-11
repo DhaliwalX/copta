@@ -22,7 +22,7 @@ void Instruction::print(std::ostream &os) const {
     os << " ";
   }
 
-  os << " # " << use_list().size();
+  os << " # " << use_list().size() << ":" << user_list().size();
 }
 
 void Instruction::ShortPrint(std::ostream &os) const {
@@ -32,6 +32,8 @@ void Instruction::ShortPrint(std::ostream &os) const {
 void AllocInstruction::print(std::ostream &os) const {
   os << name_ << " = alloc ";
   ((AllocInstruction*)this)->getType()->AsPointerType()->getBaseElementType()->dump();
+
+  os << " # " << use_list().size() << ":" << user_list().size();
 }
 
 void InvokeInstruction::print(std::ostream &os) const {
@@ -50,5 +52,7 @@ void InvokeInstruction::print(std::ostream &os) const {
     os << " ";
   }
   os << ")";
+
+  os << " # " << use_list().size() << ":" << user_list().size();
 }
 }

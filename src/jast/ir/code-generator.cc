@@ -356,7 +356,7 @@ public:
   void GenParams(const std::vector<std::string> &params, FunctionType *type) {
     auto i = 0;
     for (auto &param : params) {
-      Ref<Value> p(new Parameter(type->getArgumentsTypes()[i]));
+      Ref<Value> p(new Parameter(type->getArgumentsTypes()[i], i));
       manager_->PutSymbol(param, type->getArgumentsTypes()[i++], p);
     }
   }

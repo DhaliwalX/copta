@@ -17,7 +17,7 @@ void Void::print(std::ostream &os) const {
 }
 
 void Parameter::print(std::ostream &os) const {
-  os << "param@{";
+  os << "param@" << id_ << "{";
   type_->dump();
   os << "}";
 }

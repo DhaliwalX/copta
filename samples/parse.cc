@@ -2,6 +2,7 @@
 #include "jast/semantics/type-analysis.h"
 #include "jast/ir/code-generator.h"
 #include "jast/ir/interp-native-functions.h"
+#include "jast/ir/redundant-code-elimination.h"
 #include "dump-ast.h"
 #include "jast/ir/interp.h"
 
@@ -32,6 +33,10 @@ int main()
 
     CodeGenerator cg;
     auto mod = cg.RunOn(ast);
+    mod->dump(std::cout);
+
+    RedundantCodeEliminator eliminator;
+    eliminator.RunOn(mod);
     mod->dump(std::cout);
 
     // register native functions

@@ -12,6 +12,10 @@ namespace jast {
 namespace internal {
 
 void Print(Ref<Object> &arg) {
+  if (!arg) {
+    std::cout << "{nullptr}";
+    return;
+  }
   switch (arg->Type) {
     case kNumber:
       std::cout << arg->Int;

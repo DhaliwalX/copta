@@ -2,6 +2,7 @@
 #define BASIC_BLOCK_H_
 
 #include "jast/ir/value.h"
+#include "jast/ir/instruction.h"
 
 namespace jast {
 
@@ -53,6 +54,15 @@ private:
   std::list<Ref<Instruction>> instructions_;
   std::string label_;
 };
+
+static void RemoveInstruction(Ref<BasicBlock> bb, BasicBlock::iterator pos) {
+  Ref<Instruction> i = *pos;
+  bb->remove(pos);
+  for (auto &use : i->use_list()) {
+    use->RemoveUser(i);
+    i->RemoveUse(use);
+  }
+}
 
 }
 
