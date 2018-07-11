@@ -5,6 +5,7 @@
 #include "jast/ir/instruction.h"
 #include "jast/ir/basic-block.h"
 #include "jast/expression.h"
+#include "jast/types/type.h"
 #include "jast/statement.h"
 
 #include <iostream>
@@ -19,42 +20,75 @@ std::map<std::string, NativeFunction> NativeFunctionResolver::functions_;
 #define FAIL_IF(cond, message) assert(!(cond) && message && __LINE__ && ":" && __FILE__)
 class InterpreterImpl {
 public:
+
+  bool Tick() {
+    if (current_->end() == next_) {
+      return false;
+    }
+    auto i = next_++;
+
+    // std::cout << ticks_++ << ": ";
+    // (*i)->print(std::cout);
+    // std::cout << std::endl;
+
+    Execute(*i);
+    return true;
+  }
+
+  void Loop() {
+    bool should_continue = true;
+    while (should_continue) {
+      should_continue = Tick();
+    }
+  }
   bool Execute(Ref<Module> m) {
+    ticks_ = 0;
     auto init = m->get("init");
     auto firstblock = init->getEntry();
     current_ = firstblock;
     next_ = current_->begin();
-    while (true) {
-      auto i = next_++;
-      std::cout << "-- ";
-      (*i)->print(std::cout);
-      std::cout << std::endl;
-      Execute(*i);
-
-      if (current_->end() == next_) {
-        break;
-      }
-    }
-
+    Loop();
     return true;
   }
 
+  Ref<Object> NewStruct(jast::ObjectType *t) {
+    auto obj = Ref<Object>(new Object(kStruct));
+    for (auto &prop : *t) {
+      obj->Struct[prop.first] = NewObject(prop.second);
+    }
+
+    return obj;
+  }
+
   Ref<Object> NewObject(Type *t) {
+    if (t->IsPointerType()) {
+      t = t->AsPointerType()->getBaseElementType();
+    }
+    Ref<Object> result;
     switch (t->getTypeID()) {
       case TypeID::Integer:
-        return Ref<Object>(new Object(kNumber));
+        result = Ref<Object>(new Object(kNumber));
+        break;
 
       case TypeID::String:
-        return Ref<Object>(new Object(kString));
+        result = Ref<Object>(new Object(kString));
+        break;
       case TypeID::Array:
-        return Ref<Object>(new Object(kArray));
+        result = Ref<Object>(new Object(kArray));
+        break;
       case TypeID::Object:
-        return Ref<Object>(new Object(kStruct));
+        result = NewStruct(t->AsObjectType());
+        break;
       case TypeID::Pointer:
-        return Ref<Object>(new Object(kPointer));
+        result = Ref<Object>(new Object(kPointer));
+        break;
       default:
-        return Ref<Object>(new Object(kUndefined));
+        result = Ref<Object>(new Object(kUndefined));
     }
+
+    auto p = NewObject(kPointer);
+    p->Pointer = result;
+    return p;
   }
 
   Ref<Object> NewObject(ObjectType t) {
@@ -67,6 +101,10 @@ public:
   }
 
   Ref<Object> Execute(Ref<LoadInstruction> l) {
+    if (auto param = cast<Parameter, Value>(l->GetOperand())) {
+      valueMap_[l.get()] = args_[param->getId()];
+      return args_[param->getId()];
+    }
     auto obj = valueMap_[l->GetOperand().get()];
     assert(obj->Type == kPointer && "obj type is not pointer");
     valueMap_[l.get()] = obj->Pointer;
@@ -89,8 +127,16 @@ public:
       target = valueMap_[s->GetTarget().get()];
     }
     assert(location->Type == kPointer && "location is not a pointer");
-    location->Pointer = target;
+    CopyTo(location->Pointer, target);
     return nullptr;
+  }
+
+  void CopyTo(Ref<Object> pointer, Ref<Object> from) {
+    assert(pointer && "null pointer");
+    pointer->Int = from->Int;
+    pointer->Str = from->Str;
+    pointer->Struct = from->Struct;
+    pointer->Arr = from->Arr;
   }
 
   Ref<Object> FromConstant(Ref<Constant> c) {
@@ -217,16 +263,20 @@ public:
 
   Ref<Object> Execute(Ref<GeaInstruction> g) {
     auto obj = valueMap_[g->GetBase().get()];
-    FAIL_IF(obj->Type != kStruct, "type should be object for gea instruction");
-    auto result = NewObject(kPointer);
+    FAIL_IF(obj->Type != kPointer, "type should be pointer to object for gea instruction");
+    obj = obj->Pointer;
+    FAIL_IF(obj->Type != kStruct, "type should be pointer to object for gea instruction");
+    decltype(obj) result;
+    result = obj->Struct[g->GetElement()];
     valueMap_[g.get()] = result;
-    result->Pointer = obj->Struct[g->GetElement()];
     return result;
   }
 
   Ref<Object> Execute(Ref<IdxInstruction> i) {
     auto obj = valueMap_[i->GetBase().get()];
-    FAIL_IF(obj->Type != kArray, "type should be array for idx instruction");
+    FAIL_IF(obj->Type != kPointer, "type should be pointer for idx instruction");
+    // obj = obj->Pointer;
+    // FAIL_IF(obj->Type != kArray, "type should be array for idx instruction");
     auto result = NewObject(kPointer);
     valueMap_[i.get()] = result;
     auto idx = valueMap_[i->GetIndex().get()];
@@ -249,6 +299,7 @@ public:
     auto next_S = next_;
     auto current_S = current_;
     auto isReturn_S = isReturn_;
+    auto args_S = args_;
 
     std::vector<Ref<Object>> args;
 
@@ -256,6 +307,7 @@ public:
       auto obj = ConstantOrValue(arg);
       args.push_back(obj);
     }
+    args_ = args;
 
     if (f->isExtern()) {
       // execute native function
@@ -265,17 +317,12 @@ public:
       return r;
     }
 
+
     isReturn_ = false;
     current_ = f->getEntry();
     next_ = current_->begin();
-    while (true) {
-      auto i = next_++;
-      Execute(*i);
 
-      if (current_->end() == next_) {
-        break;
-      }
-    }
+    Loop();
 
     Ref<Object> result = nullptr;
     if (isReturn_)
@@ -284,6 +331,7 @@ public:
     next_ = next_S;
     current_ = current_S;
     isReturn_ = isReturn_S;
+    args_ = args_S;
     valueMap_[i.get()] = result;
     return result;
   }
@@ -373,6 +421,8 @@ private:
   Ref<BasicBlock> current_;
   BasicBlock::iterator next_;
   Ref<Object> retResult_;
+  std::vector<Ref<Object>> args_;
+  size_t ticks_;
   bool isReturn_;
 };
 
