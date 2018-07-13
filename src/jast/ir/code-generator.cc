@@ -332,6 +332,7 @@ public:
     manager_->PutSymbol(decl->name(), alloc->getType(), alloc);
     AddressEnv<true> env(this);
     if (decl->expr()) {
+      AddressEnv<false> env(this);
       builder_.createStore(alloc, RunOn(decl->expr()));
     }
     return alloc;
